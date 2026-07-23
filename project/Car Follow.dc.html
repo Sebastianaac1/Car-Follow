@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta name="design_doc_mode" content="canvas">
+<style>
+  * { box-sizing: border-box; }
+  a { color: var(--cf-accent); text-decoration: none; }
+  a:hover { color: var(--cf-text); }
+  @keyframes cfpulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(.7); } }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+</helmet>
+<div style="{{ rootStyle }}">
+
+  <!-- ============ COVER / BRAND BAR ============ -->
+  <div data-screen-label="Portada" style="display:flex;flex-direction:column;gap:28px;margin-bottom:64px;max-width:1400px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:24px;">
+      <div style="display:flex;align-items:center;gap:18px;">
+        <div style="width:64px;height:64px;border-radius:18px;background:var(--cf-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px -8px var(--cf-accent-soft);flex-shrink:0;">
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;color:#0b0f14;letter-spacing:-.5px;">CF</span>
+        </div>
+        <div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:34px;letter-spacing:-1px;line-height:1;color:var(--cf-text);">Car Follow</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--cf-accent);margin-top:8px;letter-spacing:.5px;">CF — el "close friend" de tu vehículo</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;padding:5px;border:1px solid var(--cf-border);border-radius:12px;background:var(--cf-surface);">
+        <button onClick="{{ setDark }}" style="{{ darkBtnStyle }}">◑ Oscuro</button>
+        <button onClick="{{ setLight }}" style="{{ lightBtnStyle }}">◐ Claro</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+      <span style="font-size:14px;color:var(--cf-dim);max-width:520px;line-height:1.5;">Un solo registro de mantención, dos formas de usarlo. La persona y el taller escriben sobre el mismo historial — cada cambio queda firmado.</span>
+      <div style="display:flex;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 13px;border-radius:99px;background:var(--cf-surface);border:1px solid var(--cf-border);font-size:13px;font-weight:500;"><span style="width:9px;height:9px;border-radius:99px;background:var(--cf-persona);"></span>Persona</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 13px;border-radius:99px;background:var(--cf-surface);border:1px solid var(--cf-border);font-size:13px;font-weight:500;"><span style="width:9px;height:9px;border-radius:99px;background:var(--cf-accent);"></span>Taller</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION LABEL: PERSONA ============ -->
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+    <span style="width:11px;height:11px;border-radius:99px;background:var(--cf-persona);"></span>
+    <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:var(--cf-text);">App de la persona</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cf-dim);">móvil · iOS / Android</span>
+    <span style="flex:1;height:1px;background:var(--cf-border);"></span>
+  </div>
+
+  <div style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:80px;">
+
+    <!-- PHONE A — Mis vehículos -->
+    <div data-screen-label="Persona · Mis vehículos" style="{{ phoneStyle }}">
+      <div style="{{ screenStyle }}">
+        <div style="{{ statusBarStyle }}"><span>9:41</span><span style="width:52px;height:6px;border-radius:99px;background:var(--cf-dim);opacity:.5;"></span><span style="font-family:'IBM Plex Mono',monospace;">100%</span></div>
+        <div style="padding:8px 20px 16px;flex:1;overflow:hidden;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <div><div style="font-size:12px;color:var(--cf-dim);">Hola, Martín</div><div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:22px;">Mis vehículos</div></div>
+            <div style="width:38px;height:38px;border-radius:12px;background:var(--cf-accent);color:#0b0f14;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:600;">+</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <!-- vehicle card 1 -->
+            <div style="border:1px solid var(--cf-border);border-radius:18px;background:var(--cf-surface);overflow:hidden;">
+              <div style="height:96px;display:flex;align-items:flex-end;padding:10px;background:repeating-linear-gradient(45deg,var(--cf-surface-2),var(--cf-surface-2) 9px,transparent 9px,transparent 18px);position:relative;">
+                <span style="position:absolute;top:10px;left:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cf-dim);">foto</span>
+                <span style="padding:4px 9px;border-radius:99px;background:var(--cf-ok-soft);color:var(--cf-ok);font-size:11px;font-weight:600;">Al día</span>
+              </div>
+              <div style="padding:12px 14px;">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:600;font-size:15px;">Toyota Hilux</span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cf-dim);">JKLM·42</span></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-dim);margin:8px 0 6px;">84.320 km · próx. aceite en 1.680 km</div>
+                <div style="height:6px;border-radius:99px;background:var(--cf-surface-2);"><div style="width:84%;height:100%;border-radius:99px;background:var(--cf-ok);"></div></div>
+              </div>
+            </div>
+            <!-- vehicle card 2 -->
+            <div style="border:1px solid var(--cf-border);border-radius:18px;background:var(--cf-surface);overflow:hidden;">
+              <div style="height:96px;display:flex;align-items:flex-end;padding:10px;background:repeating-linear-gradient(45deg,var(--cf-surface-2),var(--cf-surface-2) 9px,transparent 9px,transparent 18px);position:relative;">
+                <span style="position:absolute;top:10px;left:12px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cf-dim);">foto</span>
+                <span style="padding:4px 9px;border-radius:99px;background:var(--cf-warn-soft);color:var(--cf-warn);font-size:11px;font-weight:600;">Pronto</span>
+              </div>
+              <div style="padding:12px 14px;">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;"><span style="font-weight:600;font-size:15px;">Honda CB500</span><span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cf-dim);">moto</span></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-dim);margin:8px 0 6px;">21.050 km · frenos en 320 km</div>
+                <div style="height:6px;border-radius:99px;background:var(--cf-surface-2);"><div style="width:92%;height:100%;border-radius:99px;background:var(--cf-warn);"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="{{ tabBarStyle }}"><span style="color:var(--cf-accent);font-weight:600;">Garaje</span><span>Historial</span><span>Alertas</span><span>Perfil</span></div>
+      </div>
+    </div>
+
+    <!-- PHONE B — Detalle + historial -->
+    <div data-screen-label="Persona · Detalle e historial" style="{{ phoneStyle }}">
+      <div style="{{ screenStyle }}">
+        <div style="{{ statusBarStyle }}"><span>9:41</span><span style="width:52px;height:6px;border-radius:99px;background:var(--cf-dim);opacity:.5;"></span><span style="font-family:'IBM Plex Mono',monospace;">100%</span></div>
+        <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="height:120px;background:repeating-linear-gradient(45deg,var(--cf-surface-2),var(--cf-surface-2) 9px,transparent 9px,transparent 18px);position:relative;display:flex;align-items:flex-end;padding:14px 20px;">
+            <span style="position:absolute;top:14px;left:20px;font-size:18px;">‹</span>
+            <span style="position:absolute;top:14px;left:44px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cf-dim);">foto vehículo</span>
+            <div><div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:20px;">Toyota Hilux</div><div style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cf-dim);">JKLM·42 · 84.320 km</div></div>
+          </div>
+          <div style="padding:16px 20px;flex:1;overflow:hidden;">
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cf-dim);margin-bottom:10px;">Próximos mantenimientos</div>
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+              <div style="border:1px solid var(--cf-border);border-radius:14px;background:var(--cf-surface);padding:11px 13px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-weight:500;font-size:13.5px;">Cambio de aceite</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-ok);">1.680 km</span></div>
+                <div style="height:5px;border-radius:99px;background:var(--cf-surface-2);"><div style="width:84%;height:100%;border-radius:99px;background:var(--cf-ok);"></div></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cf-dim);margin-top:6px;">cada 10.000 km · o 12 meses — lo que ocurra primero</div>
+              </div>
+              <div style="border:1px solid var(--cf-border);border-radius:14px;background:var(--cf-surface);padding:11px 13px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="font-weight:500;font-size:13.5px;">Rotación neumáticos</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-warn);">2 meses</span></div>
+                <div style="height:5px;border-radius:99px;background:var(--cf-surface-2);"><div style="width:66%;height:100%;border-radius:99px;background:var(--cf-warn);"></div></div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cf-dim);margin-top:6px;">cada 10.000 km · o 6 meses</div>
+              </div>
+            </div>
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--cf-dim);margin-bottom:10px;">Historial</div>
+            <div style="display:flex;flex-direction:column;gap:0;">
+              <div style="display:flex;gap:11px;padding-bottom:14px;border-left:2px solid var(--cf-border);margin-left:5px;padding-left:16px;position:relative;">
+                <span style="position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:99px;background:var(--cf-accent);border:2px solid var(--cf-bg);"></span>
+                <div><div style="font-size:13px;font-weight:500;">Cambio de aceite + filtro</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);margin-top:3px;">12 mar 2026 · 82.640 km</div><div style="display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:3px 8px;border-radius:99px;background:var(--cf-accent-soft);font-size:10.5px;"><span style="width:6px;height:6px;border-radius:99px;background:var(--cf-accent);"></span>Taller CF Norte</div></div>
+              </div>
+              <div style="display:flex;gap:11px;border-left:2px solid var(--cf-border);margin-left:5px;padding-left:16px;position:relative;">
+                <span style="position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:99px;background:var(--cf-persona);border:2px solid var(--cf-bg);"></span>
+                <div><div style="font-size:13px;font-weight:500;">Pastillas de freno delanteras</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);margin-top:3px;">04 ene 2026 · 78.900 km</div><div style="display:inline-flex;align-items:center;gap:6px;margin-top:7px;padding:3px 8px;border-radius:99px;background:var(--cf-persona-soft);font-size:10.5px;"><span style="width:6px;height:6px;border-radius:99px;background:var(--cf-persona);"></span>Registrado por ti</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="{{ tabBarStyle }}"><span>Garaje</span><span style="color:var(--cf-accent);font-weight:600;">Historial</span><span>Alertas</span><span>Perfil</span></div>
+      </div>
+    </div>
+
+    <!-- PHONE C — Registrar mantención -->
+    <div data-screen-label="Persona · Registrar mantención" style="{{ phoneStyle }}">
+      <div style="{{ screenStyle }}">
+        <div style="{{ statusBarStyle }}"><span>9:41</span><span style="width:52px;height:6px;border-radius:99px;background:var(--cf-dim);opacity:.5;"></span><span style="font-family:'IBM Plex Mono',monospace;">100%</span></div>
+        <div style="padding:14px 20px;flex:1;overflow:hidden;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;"><span style="font-size:18px;">✕</span><span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:18px;">Registrar mantención</span></div>
+
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div><div style="{{ labelStyle }}">Pieza / servicio</div><div style="display:flex;gap:7px;flex-wrap:wrap;"><span style="{{ chipOnStyle }}">Aceite motor</span><span style="{{ chipStyle }}">Frenos</span><span style="{{ chipStyle }}">Filtros</span><span style="{{ chipStyle }}">+ otro</span></div></div>
+            <div style="display:flex;gap:12px;"><div style="flex:1;"><div style="{{ labelStyle }}">Fecha</div><div style="{{ inputStyle }}"><span style="font-family:'IBM Plex Mono',monospace;">06/07/2026</span></div></div><div style="flex:1;"><div style="{{ labelStyle }}">Kilometraje</div><div style="{{ inputStyle }}"><span style="font-family:'IBM Plex Mono',monospace;">84.320</span></div></div></div>
+            <div><div style="{{ labelStyle }}">Lugar</div><div style="display:flex;gap:7px;"><span style="{{ chipOnStyle }}">Taller</span><span style="{{ chipStyle }}">Particular / yo mismo</span></div></div>
+            <div><div style="{{ labelStyle }}">Piezas cambiadas</div><div style="display:flex;gap:7px;flex-wrap:wrap;"><span style="{{ tagStyle }}">Aceite 5W-30 ×4L ✕</span><span style="{{ tagStyle }}">Filtro aceite ✕</span></div></div>
+
+            <div style="border:1px solid var(--cf-border);border-radius:14px;background:var(--cf-surface);padding:13px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><span style="font-weight:600;font-size:13.5px;">Programar próximo cambio</span><span style="width:36px;height:20px;border-radius:99px;background:var(--cf-accent);position:relative;"><span style="position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:99px;background:#fff;"></span></span></div>
+              <div style="display:flex;gap:12px;"><div style="flex:1;"><div style="{{ labelStyle }}">Cada</div><div style="{{ inputStyle }}"><span style="font-family:'IBM Plex Mono',monospace;">10.000 km</span></div></div><div style="flex:1;"><div style="{{ labelStyle }}">o cada</div><div style="{{ inputStyle }}"><span style="font-family:'IBM Plex Mono',monospace;">12 meses</span></div></div></div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cf-accent);margin-top:9px;">→ te avisamos por lo que ocurra primero</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:14px 20px;border-top:1px solid var(--cf-border);"><div style="height:48px;border-radius:14px;background:var(--cf-accent);color:#0b0f14;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;">Guardar mantención</div></div>
+      </div>
+    </div>
+
+    <!-- PHONE D — Reglas / recordatorios por pieza -->
+    <div data-screen-label="Persona · Reglas por pieza" style="{{ phoneStyle }}">
+      <div style="{{ screenStyle }}">
+        <div style="{{ statusBarStyle }}"><span>9:41</span><span style="width:52px;height:6px;border-radius:99px;background:var(--cf-dim);opacity:.5;"></span><span style="font-family:'IBM Plex Mono',monospace;">100%</span></div>
+        <div style="padding:14px 20px;flex:1;overflow:hidden;">
+          <div style="margin-bottom:6px;"><span style="font-size:18px;">‹</span></div>
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:20px;margin-bottom:4px;">Reglas por pieza</div>
+          <div style="font-size:12px;color:var(--cf-dim);margin-bottom:18px;line-height:1.5;">Intervalos predefinidos por CF. Ajústalos según tu uso — el aviso salta por km o tiempo, lo primero.</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="border:1px solid var(--cf-border);border-radius:14px;background:var(--cf-surface);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:500;font-size:14px;">Aceite motor</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-dim);margin-top:4px;">10.000 km · 12 meses</div></div><span style="color:var(--cf-accent);font-size:13px;">Editar</span></div>
+            <div style="border:1px solid var(--cf-border);border-radius:14px;background:var(--cf-surface);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:500;font-size:14px;">Filtro de aire</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-dim);margin-top:4px;">15.000 km · 24 meses</div></div><span style="color:var(--cf-accent);font-size:13px;">Editar</span></div>
+            <div style="border:1px solid var(--cf-border);border-radius:14px;background:var(--cf-surface);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:500;font-size:14px;">Pastillas de freno</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-dim);margin-top:4px;">30.000 km · 36 meses</div></div><span style="color:var(--cf-accent);font-size:13px;">Editar</span></div>
+            <div style="border:1px solid var(--cf-border);border-radius:14px;background:var(--cf-surface);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-weight:500;font-size:14px;">Correa de distribución</div><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-dim);margin-top:4px;">80.000 km · 60 meses</div></div><span style="color:var(--cf-accent);font-size:13px;">Editar</span></div>
+            <div style="border:1px dashed var(--cf-border);border-radius:14px;padding:12px 14px;text-align:center;color:var(--cf-dim);font-size:13px;">+ Añadir regla personalizada</div>
+          </div>
+        </div>
+        <div style="{{ tabBarStyle }}"><span>Garaje</span><span>Historial</span><span>Alertas</span><span style="color:var(--cf-accent);font-weight:600;">Perfil</span></div>
+      </div>
+    </div>
+
+    <!-- PHONE E — Notificaciones -->
+    <div data-screen-label="Persona · Notificaciones" style="{{ phoneStyle }}">
+      <div style="{{ screenStyle }}">
+        <div style="{{ statusBarStyle }}"><span>9:41</span><span style="width:52px;height:6px;border-radius:99px;background:var(--cf-dim);opacity:.5;"></span><span style="font-family:'IBM Plex Mono',monospace;">100%</span></div>
+        <div style="padding:14px 20px;flex:1;overflow:hidden;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:22px;margin-bottom:16px;">Alertas</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="border:1px solid var(--cf-danger);border-radius:16px;background:var(--cf-danger-soft);padding:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-weight:600;font-size:14px;color:var(--cf-danger);">Frenos vencidos</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-danger);">Honda CB500</span></div>
+              <div style="font-size:12.5px;color:var(--cf-text);line-height:1.45;">Superaste el intervalo por 180 km. Agenda el cambio pronto.</div>
+              <div style="margin-top:10px;display:flex;gap:8px;"><span style="padding:6px 12px;border-radius:10px;background:var(--cf-danger);color:#0b0f14;font-size:12px;font-weight:600;">Agendar taller</span><span style="padding:6px 12px;border-radius:10px;border:1px solid var(--cf-border);font-size:12px;">Ya lo hice</span></div>
+            </div>
+            <div style="border:1px solid var(--cf-border);border-radius:16px;background:var(--cf-surface);padding:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-weight:600;font-size:14px;color:var(--cf-warn);">Aceite pronto</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">Toyota Hilux</span></div>
+              <div style="font-size:12.5px;color:var(--cf-text);line-height:1.45;">Faltan <b style="font-family:'IBM Plex Mono',monospace;">1.680 km</b> o 2 meses para el cambio de aceite.</div>
+            </div>
+            <div style="border:1px solid var(--cf-border);border-radius:16px;background:var(--cf-surface);padding:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-weight:600;font-size:14px;">Nuevo registro del taller</span><span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">hace 2 h</span></div>
+              <div style="font-size:12.5px;color:var(--cf-text);line-height:1.45;">Taller CF Norte añadió “cambio de aceite” a tu Hilux. Revísalo y confírmalo.</div>
+            </div>
+          </div>
+        </div>
+        <div style="{{ tabBarStyle }}"><span>Garaje</span><span>Historial</span><span style="color:var(--cf-accent);font-weight:600;">Alertas</span><span>Perfil</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ SECTION LABEL: TALLER ============ -->
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+    <span style="width:11px;height:11px;border-radius:99px;background:var(--cf-accent);"></span>
+    <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:var(--cf-text);">Panel del taller</span>
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--cf-dim);">web · escritorio</span>
+    <span style="flex:1;height:1px;background:var(--cf-border);"></span>
+  </div>
+
+  <!-- BROWSER WINDOW -->
+  <div data-screen-label="Taller · Panel web" style="max-width:1400px;border:1px solid var(--cf-border);border-radius:16px;overflow:hidden;background:var(--cf-surface);box-shadow:0 30px 80px -30px rgba(0,0,0,.5);margin-bottom:80px;">
+    <div style="height:42px;background:var(--cf-surface-2);display:flex;align-items:center;padding:0 16px;gap:8px;border-bottom:1px solid var(--cf-border);">
+      <span style="width:11px;height:11px;border-radius:99px;background:#ff5f57;"></span><span style="width:11px;height:11px;border-radius:99px;background:#febc2e;"></span><span style="width:11px;height:11px;border-radius:99px;background:#28c840;"></span>
+      <div style="flex:1;display:flex;justify-content:center;"><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--cf-dim);background:var(--cf-bg);padding:5px 16px;border-radius:8px;">app.carfollow.io/taller</span></div>
+    </div>
+    <div style="display:flex;min-height:560px;">
+      <!-- sidebar -->
+      <div style="width:210px;background:var(--cf-bg);border-right:1px solid var(--cf-border);padding:18px 14px;display:flex;flex-direction:column;gap:6px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:4px 8px;margin-bottom:14px;"><div style="width:32px;height:32px;border-radius:9px;background:var(--cf-accent);display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:#0b0f14;">CF</div><div><div style="font-weight:600;font-size:13px;">Taller CF Norte</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cf-dim);">Plan Pro</div></div></div>
+        <div style="{{ navOnStyle }}">Dashboard</div>
+        <div style="{{ navStyle }}">Clientes</div>
+        <div style="{{ navStyle }}">Vehículos</div>
+        <div style="{{ navStyle }}">Trabajos</div>
+        <div style="{{ navStyle }}">Recordatorios</div>
+        <div style="flex:1;"></div>
+        <div style="{{ navStyle }}">Ajustes</div>
+      </div>
+      <!-- main -->
+      <div style="flex:1;padding:24px 28px;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+          <div><div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:24px;">Vehículos en seguimiento</div><div style="font-size:12.5px;color:var(--cf-dim);margin-top:3px;">248 activos · 12 con mantención pendiente</div></div>
+          <div style="display:flex;gap:10px;"><span style="padding:9px 14px;border:1px solid var(--cf-border);border-radius:10px;font-size:13px;color:var(--cf-dim);font-family:'IBM Plex Mono',monospace;">Buscar patente…</span><span style="padding:9px 16px;background:var(--cf-accent);color:#0b0f14;border-radius:10px;font-size:13px;font-weight:600;">+ Registrar trabajo</span></div>
+        </div>
+        <!-- KPI row -->
+        <div style="display:flex;gap:14px;margin-bottom:22px;">
+          <div style="flex:1;border:1px solid var(--cf-border);border-radius:14px;padding:14px 16px;background:var(--cf-bg);"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-dim);">Pendientes hoy</div><div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;margin-top:4px;">7</div></div>
+          <div style="flex:1;border:1px solid var(--cf-border);border-radius:14px;padding:14px 16px;background:var(--cf-bg);"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-dim);">Vencidos</div><div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;margin-top:4px;color:var(--cf-danger);">3</div></div>
+          <div style="flex:1;border:1px solid var(--cf-border);border-radius:14px;padding:14px 16px;background:var(--cf-bg);"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--cf-dim);">Trabajos este mes</div><div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:26px;margin-top:4px;">64</div></div>
+        </div>
+        <div style="display:flex;gap:22px;">
+          <!-- table -->
+          <div style="flex:1.4;">
+            <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.8fr;padding:0 14px 10px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--cf-dim);"><span>Vehículo</span><span>Cliente</span><span>Próximo</span><span>Estado</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.8fr;align-items:center;padding:12px 14px;border:1px solid var(--cf-accent);border-radius:12px;background:var(--cf-accent-soft);"><div><div style="font-weight:600;font-size:13.5px;">Toyota Hilux</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">JKLM·42</div></div><span style="font-size:12.5px;">Martín R.</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;">Aceite · 1.680 km</span><span style="padding:4px 9px;border-radius:99px;background:var(--cf-ok-soft);color:var(--cf-ok);font-size:11px;font-weight:600;width:fit-content;">Al día</span></div>
+              <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.8fr;align-items:center;padding:12px 14px;border:1px solid var(--cf-border);border-radius:12px;"><div><div style="font-weight:600;font-size:13.5px;">Ford Ranger</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">PQRS·08</div></div><span style="font-size:12.5px;">Lucía M.</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;">Frenos · vencido</span><span style="padding:4px 9px;border-radius:99px;background:var(--cf-danger-soft);color:var(--cf-danger);font-size:11px;font-weight:600;width:fit-content;">Vencido</span></div>
+              <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.8fr;align-items:center;padding:12px 14px;border:1px solid var(--cf-border);border-radius:12px;"><div><div style="font-weight:600;font-size:13.5px;">Scania R450</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">camión</div></div><span style="font-size:12.5px;">Transp. Sur</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;">Filtro · 12 días</span><span style="padding:4px 9px;border-radius:99px;background:var(--cf-warn-soft);color:var(--cf-warn);font-size:11px;font-weight:600;width:fit-content;">Pronto</span></div>
+              <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.8fr;align-items:center;padding:12px 14px;border:1px solid var(--cf-border);border-radius:12px;"><div><div style="font-weight:600;font-size:13.5px;">Honda CB500</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">moto</div></div><span style="font-size:12.5px;">Martín R.</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;">Frenos · 320 km</span><span style="padding:4px 9px;border-radius:99px;background:var(--cf-warn-soft);color:var(--cf-warn);font-size:11px;font-weight:600;width:fit-content;">Pronto</span></div>
+              <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 0.8fr;align-items:center;padding:12px 14px;border:1px solid var(--cf-border);border-radius:12px;"><div><div style="font-weight:600;font-size:13.5px;">Cat 320 (excav.)</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">maquinaria</div></div><span style="font-size:12.5px;">Constr. Andes</span><span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;">Hidráulico · 40 h</span><span style="padding:4px 9px;border-radius:99px;background:var(--cf-ok-soft);color:var(--cf-ok);font-size:11px;font-weight:600;width:fit-content;">Al día</span></div>
+            </div>
+          </div>
+          <!-- detail / audit panel -->
+          <div style="flex:1;border:1px solid var(--cf-border);border-radius:16px;background:var(--cf-bg);padding:18px;">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--cf-dim);margin-bottom:6px;">Ficha · Toyota Hilux</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:17px;margin-bottom:14px;">Cambio de aceite</div>
+            <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px;font-size:12.5px;">
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--cf-dim);">Fecha</span><span style="font-family:'IBM Plex Mono',monospace;">12/03/2026</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--cf-dim);">Kilometraje</span><span style="font-family:'IBM Plex Mono',monospace;">82.640 km</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--cf-dim);">Próximo</span><span style="font-family:'IBM Plex Mono',monospace;color:var(--cf-accent);">10.000 km / 12 m</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="color:var(--cf-dim);">Piezas</span><span style="text-align:right;">Aceite 5W-30, filtro</span></div>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--cf-dim);margin-bottom:10px;">Historial de modificaciones</div>
+            <div style="display:flex;flex-direction:column;gap:0;">
+              <div style="border-left:2px solid var(--cf-border);padding-left:14px;margin-left:4px;padding-bottom:12px;position:relative;"><span style="position:absolute;left:-5px;top:2px;width:8px;height:8px;border-radius:99px;background:var(--cf-accent);"></span><div style="font-size:12px;">Registró el trabajo</div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cf-dim);margin-top:2px;">12/03 14:02</div><span style="display:inline-block;margin-top:5px;padding:2px 8px;border-radius:99px;background:var(--cf-accent-soft);font-size:10px;color:var(--cf-accent);">Taller CF Norte</span></div>
+              <div style="border-left:2px solid var(--cf-border);padding-left:14px;margin-left:4px;position:relative;"><span style="position:absolute;left:-5px;top:2px;width:8px;height:8px;border-radius:99px;background:var(--cf-persona);"></span><div style="font-size:12px;">Corrigió km: 82.600 → <b>82.640</b></div><div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cf-dim);margin-top:2px;">14/03 09:15</div><span style="display:inline-block;margin-top:5px;padding:2px 8px;border-radius:99px;background:var(--cf-persona-soft);font-size:10px;color:var(--cf-persona);">Martín (dueño)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION LABEL: CONEXIÓN ============ -->
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+    <span style="width:11px;height:11px;border-radius:99px;background:var(--cf-text);"></span>
+    <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:var(--cf-text);">Cómo se conectan</span>
+    <span style="flex:1;height:1px;background:var(--cf-border);"></span>
+  </div>
+
+  <div data-screen-label="Conexión · Un historial, dos autores" style="max-width:1400px;border:1px solid var(--cf-border);border-radius:20px;background:var(--cf-surface);padding:36px;margin-bottom:40px;">
+    <div style="display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;margin-bottom:36px;">
+      <div style="text-align:center;width:200px;"><div style="width:64px;height:64px;border-radius:18px;background:var(--cf-persona-soft);border:1px solid var(--cf-persona);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><span style="width:26px;height:40px;border:2px solid var(--cf-persona);border-radius:5px;"></span></div><div style="font-weight:600;font-size:15px;">Persona</div><div style="font-size:12px;color:var(--cf-dim);margin-top:4px;line-height:1.4;">Consulta, registra y corrige desde el móvil</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;color:var(--cf-dim);padding:0 8px;"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;">sincroniza</span><span style="font-size:20px;">⇄</span></div>
+      <div style="text-align:center;width:220px;"><div style="width:72px;height:72px;border-radius:20px;background:var(--cf-accent);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 14px 34px -10px var(--cf-accent-soft);"><span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:24px;color:#0b0f14;">CF</span></div><div style="font-weight:600;font-size:15px;">Historial único</div><div style="font-size:12px;color:var(--cf-dim);margin-top:4px;line-height:1.4;">Un solo registro por vehículo, en la nube</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;color:var(--cf-dim);padding:0 8px;"><span style="font-family:'IBM Plex Mono',monospace;font-size:10px;">sincroniza</span><span style="font-size:20px;">⇄</span></div>
+      <div style="text-align:center;width:200px;"><div style="width:64px;height:64px;border-radius:18px;background:var(--cf-accent-soft);border:1px solid var(--cf-accent);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><span style="width:42px;height:30px;border:2px solid var(--cf-accent);border-radius:4px;"></span></div><div style="font-weight:600;font-size:15px;">Taller</div><div style="font-size:12px;color:var(--cf-dim);margin-top:4px;line-height:1.4;">Registra trabajos y programa avisos desde la web</div></div>
+    </div>
+    <div style="border-top:1px solid var(--cf-border);padding-top:28px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:16px;margin-bottom:6px;">Cada cambio queda firmado</div>
+      <div style="font-size:13px;color:var(--cf-dim);margin-bottom:20px;max-width:640px;line-height:1.5;">Si el taller anota una mantención y luego la persona la corrige, ambas versiones quedan visibles con autor y fecha. Nada se sobrescribe en silencio.</div>
+      <div style="display:flex;gap:0;overflow-x:auto;padding-bottom:4px;">
+        <div style="flex:1;min-width:200px;border-left:2px solid var(--cf-border);padding:0 20px;position:relative;"><span style="position:absolute;left:-6px;top:0;width:10px;height:10px;border-radius:99px;background:var(--cf-accent);"></span><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">12/03 · 14:02</div><div style="font-weight:500;font-size:13.5px;margin:5px 0;">Aceite + filtro registrado</div><span style="padding:3px 9px;border-radius:99px;background:var(--cf-accent-soft);color:var(--cf-accent);font-size:11px;">Taller CF Norte</span></div>
+        <div style="flex:1;min-width:200px;border-left:2px solid var(--cf-border);padding:0 20px;position:relative;"><span style="position:absolute;left:-6px;top:0;width:10px;height:10px;border-radius:99px;background:var(--cf-persona);"></span><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">14/03 · 09:15</div><div style="font-weight:500;font-size:13.5px;margin:5px 0;">Km corregido a 82.640</div><span style="padding:3px 9px;border-radius:99px;background:var(--cf-persona-soft);color:var(--cf-persona);font-size:11px;">Martín (dueño)</span></div>
+        <div style="flex:1;min-width:200px;border-left:2px solid var(--cf-border);padding:0 20px;position:relative;"><span style="position:absolute;left:-6px;top:0;width:10px;height:10px;border-radius:99px;background:var(--cf-warn);animation:cfpulse 2s infinite;"></span><div style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--cf-dim);">próximamente</div><div style="font-weight:500;font-size:13.5px;margin:5px 0;">Aviso: aceite en 1.680 km</div><span style="padding:3px 9px;border-radius:99px;background:var(--cf-surface-2);color:var(--cf-dim);font-size:11px;">CF · automático</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1500,&quot;height&quot;:1000}}">
+class Component extends DCLogic {
+  state = { theme: 'dark' };
+
+  palettes = {
+    dark: {
+      '--cf-bg': '#0b0f14',
+      '--cf-surface': '#131a22',
+      '--cf-surface-2': '#1c2530',
+      '--cf-border': '#26303d',
+      '--cf-text': '#e8edf2',
+      '--cf-dim': '#8593a2',
+      '--cf-accent': '#f97316',
+      '--cf-accent-soft': 'rgba(249,115,22,0.16)',
+      '--cf-persona': '#60a5fa',
+      '--cf-persona-soft': 'rgba(96,165,250,0.16)',
+      '--cf-ok': '#34d399',
+      '--cf-ok-soft': 'rgba(52,211,153,0.15)',
+      '--cf-warn': '#fbbf24',
+      '--cf-warn-soft': 'rgba(251,191,36,0.15)',
+      '--cf-danger': '#f87171',
+      '--cf-danger-soft': 'rgba(248,113,113,0.13)'
+    },
+    light: {
+      '--cf-bg': '#eceff3',
+      '--cf-surface': '#ffffff',
+      '--cf-surface-2': '#f2f5f8',
+      '--cf-border': '#dbe1e8',
+      '--cf-text': '#0f1720',
+      '--cf-dim': '#5d6875',
+      '--cf-accent': '#e5620d',
+      '--cf-accent-soft': 'rgba(229,98,13,0.12)',
+      '--cf-persona': '#2563eb',
+      '--cf-persona-soft': 'rgba(37,99,235,0.12)',
+      '--cf-ok': '#0f9d63',
+      '--cf-ok-soft': 'rgba(15,157,99,0.12)',
+      '--cf-warn': '#b7791f',
+      '--cf-warn-soft': 'rgba(183,121,31,0.13)',
+      '--cf-danger': '#dc2626',
+      '--cf-danger-soft': 'rgba(220,38,38,0.10)'
+    }
+  };
+
+  renderVals() {
+    const t = this.state.theme;
+    const vars = this.palettes[t];
+    const rootStyle = Object.assign({
+      minHeight: '100%',
+      padding: '48px',
+      fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
+      background: 'var(--cf-bg)',
+      color: 'var(--cf-text)',
+      transition: 'background .25s ease, color .25s ease'
+    }, vars);
+
+    const seg = (on) => ({
+      padding: '7px 14px', borderRadius: '9px', fontSize: '13px', fontWeight: 600,
+      cursor: 'pointer', border: 'none',
+      background: on ? 'var(--cf-accent)' : 'transparent',
+      color: on ? '#0b0f14' : 'var(--cf-dim)'
+    });
+
+    return {
+      rootStyle,
+      setDark: () => this.setState({ theme: 'dark' }),
+      setLight: () => this.setState({ theme: 'light' }),
+      darkBtnStyle: seg(t === 'dark'),
+      lightBtnStyle: seg(t === 'light'),
+
+      phoneStyle: {
+        width: '288px', background: 'var(--cf-surface)', border: '1px solid var(--cf-border)',
+        borderRadius: '36px', padding: '9px', boxShadow: '0 30px 70px -24px rgba(0,0,0,.55)', flexShrink: 0
+      },
+      screenStyle: {
+        background: 'var(--cf-bg)', borderRadius: '28px', overflow: 'hidden',
+        height: '604px', display: 'flex', flexDirection: 'column'
+      },
+      statusBarStyle: {
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '14px 22px 6px', fontSize: '12px', fontWeight: 500, color: 'var(--cf-text)'
+      },
+      tabBarStyle: {
+        display: 'flex', justifyContent: 'space-around', padding: '13px 16px 20px',
+        borderTop: '1px solid var(--cf-border)', fontSize: '11px', color: 'var(--cf-dim)'
+      },
+      labelStyle: { fontSize: '11px', color: 'var(--cf-dim)', marginBottom: '6px', fontWeight: 500 },
+      inputStyle: {
+        border: '1px solid var(--cf-border)', borderRadius: '11px', padding: '11px 13px',
+        background: 'var(--cf-surface)', fontSize: '13.5px', color: 'var(--cf-text)'
+      },
+      chipStyle: {
+        padding: '8px 13px', borderRadius: '10px', border: '1px solid var(--cf-border)',
+        fontSize: '12.5px', color: 'var(--cf-dim)', background: 'var(--cf-surface)'
+      },
+      chipOnStyle: {
+        padding: '8px 13px', borderRadius: '10px', border: '1px solid var(--cf-accent)',
+        fontSize: '12.5px', color: 'var(--cf-accent)', fontWeight: 600, background: 'var(--cf-accent-soft)'
+      },
+      tagStyle: {
+        padding: '7px 11px', borderRadius: '9px', background: 'var(--cf-surface-2)',
+        fontSize: '12px', fontFamily: "'IBM Plex Mono', monospace"
+      },
+      navStyle: {
+        padding: '9px 12px', borderRadius: '9px', fontSize: '13.5px', color: 'var(--cf-dim)', cursor: 'pointer'
+      },
+      navOnStyle: {
+        padding: '9px 12px', borderRadius: '9px', fontSize: '13.5px', fontWeight: 600,
+        color: 'var(--cf-text)', background: 'var(--cf-accent-soft)', cursor: 'pointer'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  background: var(--cf-bg);
+  color: var(--cf-text);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+a {
+  color: var(--cf-accent);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--cf-text);
+}
+
+button {
+  font-family: inherit;
+}
+
+.cf-mono {
+  font-family: "IBM Plex Mono", monospace;
+}
+.cf-display {
+  font-family: "Space Grotesk", sans-serif;
+}
+
+@keyframes cfpulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.7);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--cf-border);
+  border-radius: 99px;
+}
