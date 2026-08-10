@@ -1,10 +1,20 @@
 import { useState } from "react";
 import { vehicles } from "@cf/mock-data";
+import { useSesion } from "../sesion";
 import { DetailBody } from "./DetailBody";
 
 export function Historial() {
-  const mine = vehicles.filter((v) => v.ownerId === "martin");
-  const [selected, setSelected] = useState(mine[0].id);
+  const { sesion } = useSesion();
+  const mine = vehicles.filter((v) => v.ownerId === sesion?.ownerId);
+  const [selected, setSelected] = useState(mine[0]?.id ?? "");
+
+  if (mine.length === 0) {
+    return (
+      <div style={{ padding: "20px", fontSize: 13, color: "var(--cf-dim)", lineHeight: 1.5 }}>
+        Todavía no tienes vehículos, así que no hay historial que mostrar.
+      </div>
+    );
+  }
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>

@@ -1,12 +1,15 @@
+import { useNavigate } from "react-router-dom";
 import { StatusBadge } from "@cf/ui";
-import { vehicles, workshopRows } from "@cf/mock-data";
+import { nextUpcoming, vehicles, vehicleStatus } from "@cf/mock-data";
+import { useData } from "../store";
 import { km } from "../format";
 
-const cols = "1.4fr 1fr 1fr 1fr 0.8fr";
+const cols = "1.4fr 1fr 1fr 1.1fr 0.8fr";
 const kindLabel: Record<string, string> = { auto: "Auto", moto: "Moto", camion: "Camión", maquinaria: "Maquinaria" };
 
 export function Vehiculos() {
-  const nextById = Object.fromEntries(workshopRows.map((r) => [r.vehicleId, r.next]));
+  const navigate = useNavigate();
+  const { records } = useData();
 
   return (
     <>
@@ -14,7 +17,7 @@ export function Vehiculos() {
         Vehículos
       </div>
       <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginBottom: 22 }}>
-        Todos los vehículos en seguimiento del taller
+        Todos los vehículos en seguimiento del taller — abre uno para ver su ficha completa.
       </div>
 
       <div
@@ -36,32 +39,41 @@ export function Vehiculos() {
         <span>Estado</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-        {vehicles.map((v) => (
-          <div
-            key={v.id}
-            style={{
-              display: "grid",
-              gridTemplateColumns: cols,
-              alignItems: "center",
-              padding: "12px 14px",
-              border: "1px solid var(--cf-border)",
-              borderRadius: 12,
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 600, fontSize: 13.5 }}>{v.name}</div>
-              <div className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-dim)" }}>
-                {km(v.odometer)} km
+        {vehicles.map((v) => {
+          const next = nextUpcoming(v.id, records);
+          return (
+            <div
+              key={v.id}
+              className="cf-tap"
+              role="link"
+              tabIndex={0}
+              onClick={() => navigate(`/vehiculos/${v.id}`)}
+              onKeyDown={(e) => e.key === "Enter" && navigate(`/vehiculos/${v.id}`)}
+              style={{
+                display: "grid",
+                gridTemplateColumns: cols,
+                alignItems: "center",
+                padding: "12px 14px",
+                border: "1px solid var(--cf-border)",
+                borderRadius: 12,
+                background: "var(--cf-surface)",
+              }}
+            >
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 13.5 }}>{v.name}</div>
+                <div className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-dim)" }}>
+                  {v.plate} · {km(v.odometer)} km
+                </div>
               </div>
+              <span style={{ fontSize: 12.5 }}>{kindLabel[v.kind]}</span>
+              <span style={{ fontSize: 12.5 }}>{v.ownerName}</span>
+              <span className="cf-mono" style={{ fontSize: 11.5 }}>
+                {next ? `${next.part} · ${next.remainingLabel}` : "sin registros"}
+              </span>
+              <StatusBadge status={vehicleStatus(v.id, records)} />
             </div>
-            <span style={{ fontSize: 12.5 }}>{kindLabel[v.kind]}</span>
-            <span style={{ fontSize: 12.5 }}>{v.ownerName}</span>
-            <span className="cf-mono" style={{ fontSize: 11.5 }}>
-              {nextById[v.id] ?? "—"}
-            </span>
-            <StatusBadge status={v.status} />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </>
   );

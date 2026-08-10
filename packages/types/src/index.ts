@@ -10,6 +10,19 @@ export interface Author {
   name: string;
 }
 
+/**
+ * Cuenta de acceso. El rol es un dato de la cuenta, no una opción del formulario:
+ * al entrar se descubre buscando el correo, nunca se le pregunta al cliente.
+ */
+export interface Account {
+  email: string;
+  role: AuthorRole;
+  name: string;
+  /** Solo en cuentas de persona: de quién son los vehículos que verá. */
+  ownerId?: string;
+}
+
+/** El estado no se guarda: se deriva de las mantenciones registradas. */
 export interface Vehicle {
   id: string;
   name: string;
@@ -18,7 +31,6 @@ export interface Vehicle {
   odometer: number;
   ownerId: string;
   ownerName: string;
-  status: MaintenanceStatus;
 }
 
 /** Regla de recordatorio por pieza: salta por km o por tiempo, lo que ocurra primero. */
@@ -27,18 +39,22 @@ export interface PartRule {
   part: string;
   intervalKm: number | null;
   intervalMonths: number | null;
+  /** Términos que se buscan en el título y las piezas de un trabajo para saber si lo cubre. */
+  keywords: string[];
 }
 
-/** Próxima mantención estimada para un vehículo, derivada de una regla. */
+/** Próxima mantención de una pieza, derivada del último trabajo que la cubrió. */
 export interface UpcomingService {
   id: string;
   vehicleId: string;
   part: string;
   status: MaintenanceStatus;
-  /** Progreso del intervalo consumido, 0..1. */
+  /** Fracción del intervalo consumida. Pasa de 1 cuando está vencida. */
   progress: number;
   remainingLabel: string;
   ruleLabel: string;
+  /** Trabajo desde el que se cuenta el intervalo. Cada app lo formatea a su manera. */
+  since: { date: string; odometer: number };
 }
 
 /** Una entrada del historial de mantención de un vehículo. */
@@ -66,21 +82,10 @@ export interface Revision {
   author: Author;
 }
 
-export type AlertLevel = "vencido" | "pronto" | "info";
-
-export interface Alert {
-  id: string;
-  level: AlertLevel;
-  title: string;
-  vehicleName: string;
-  body: string;
-  meta?: string;
-  actions?: { label: string; primary?: boolean }[];
-}
-
 export interface Client {
   id: string;
   name: string;
+  phone: string;
   vehicleIds: string[];
   plan: "particular";
 }

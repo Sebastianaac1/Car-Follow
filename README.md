@@ -1,14 +1,146 @@
-# Car Follow (CF)
+<div align="center">
 
-> El _"close friend"_ de tu vehículo — un solo registro de mantención, dos formas de usarlo.
+# Car Follow
 
-Monorepo con dos aplicaciones que comparten un mismo historial de mantención firmado:
-la **app de la persona** (móvil) y el **panel del taller** (web). Cada cambio en el
-historial queda firmado por su autor (azul = persona, naranja = taller) y nada se
-sobrescribe en silencio.
+**El historial de mantención de tu vehículo, compartido entre quien lo maneja y quien lo repara.**
 
-Implementación del diseño exportado desde Claude Design (ver `project/Car Follow.dc.html`
-y `chats/`). Prototipo **navegable** con datos mock — sin backend todavía.
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vite.dev)
+[![pnpm](https://img.shields.io/badge/pnpm-workspaces-F69220?logo=pnpm&logoColor=white)](https://pnpm.io)
+[![Turborepo](https://img.shields.io/badge/Turborepo-2-EF4444?logo=turborepo&logoColor=white)](https://turbo.build)
+
+![App de la persona](docs/persona.png)
+
+</div>
+
+## El problema
+
+El historial de mantención de un vehículo vive partido en dos: lo que el taller anotó
+en su sistema y lo que el dueño recuerda. Cuando el auto cambia de manos, o de taller,
+esa información se pierde.
+
+**Car Follow** es un solo historial con dos formas de escribir en él: una app móvil para
+la persona y un panel web para el taller. Cada cambio queda **firmado por su autor** y
+nada se sobrescribe — si el taller anota 82.600 km y el dueño lo corrige a 82.640, quedan
+las dos entradas con su firma y su hora.
+
+## Qué demuestra este proyecto
+
+| | |
+|---|---|
+| **Nada de estado duplicado** | Los recordatorios, la barra de progreso y el estado de cada vehículo **no se guardan**: se derivan del último trabajo que cubrió cada pieza más su regla por km/meses. Registrar una mantención mueve el recordatorio solo, sin sincronizar dos fuentes de verdad. |
+| **Monorepo real** | pnpm workspaces + Turborepo: dos apps y tres packages compartidos, con un contrato de tipos único (`@cf/types`) pensado para que el backend futuro lo reutilice. |
+| **Design system propio** | Tokens de color en CSS custom properties, tema claro/oscuro persistido, y componentes compartidos entre ambas apps (`@cf/ui`). |
+| **Audit trail en el modelo** | El historial es append-only por diseño: cada `Revision` guarda autor, descripción y timestamp. La propiedad se sostiene desde el tipo, no desde la UI. |
+| **Criterio, no abstracción** | Las reglas de decisión del repo están escritas en [`CLAUDE.md`](CLAUDE.md): regla de tres, prohibido el parámetro-bandera, sin indirección de un solo uso. `formatDate` está duplicada a propósito porque son dos formatos distintos, no una función con un flag. |
+| **Arquitectura pensada** | El plan de backend, el modelo de autenticación y las decisiones de seguridad están razonados abajo, incluyendo por qué **no** se usa Next.js acá. |
+
+> **Estado:** prototipo navegable con datos en memoria. No hay backend, persistencia ni
+> tests todavía — el plan del backend está más abajo y aún no existe en código.
+
+### Cómo se derivan los recordatorios
+
+Cada pieza tiene una regla (`cada 10.000 km · o 12 meses`). Para cada vehículo se busca
+el trabajo más reciente que la cubrió y se calcula cuánto del intervalo se consumió por
+kilometraje y por tiempo. **Gana el eje que va más adelante** — el que dispara primero:
+
+```ts
+const byKm   = (vehicle.odometer - last.odometer) / rule.intervalKm;
+const byTime = monthsSince(last.date) / rule.intervalMonths;
+const progress = Math.max(byKm, byTime);   // >= 0.8 → "pronto", >= 1 → "vencido"
+```
+
+El estado del vehículo es el peor de sus piezas. Una pieza sin ningún trabajo registrado
+no genera recordatorio: no hay desde dónde contar el intervalo. Todo esto vive en
+`packages/mock-data/src/index.ts` y se muda al backend tal cual cuando exista.
+
+### Sesión, roles y guardas de ruta
+
+**El rol no se elige al entrar: se descubre.** El login pide solo correo y contraseña,
+busca la cuenta en el directorio y lee su `role`. Si esa cuenta pertenece a la otra app,
+te redirige a ella. El tipo de cuenta se elige **una sola vez, en `/registro`**.
+
+```ts
+const cuenta = accountByEmail(email);
+if (!cuenta)                    → "No hay ninguna cuenta con ese correo."
+if (cuenta.role !== "taller")   → redirige a la app de la persona
+else                            → entra
+```
+
+Esto importa más allá del formulario: un cliente que elige su propio rol es un cliente
+que se auto-asigna permisos. El rol es un dato de la cuenta que resuelve el servidor.
+
+Sin sesión ninguna pantalla se monta — te manda a `/login` recordando a dónde ibas, y al
+entrar vuelves ahí. La sesión vive en `sessionStorage`, no en `localStorage`, que es lo
+mismo que hará el JWT cuando exista.
+
+| Cuenta de prueba | Rol |
+|---|---|
+| `martin@correo.cl` | persona |
+| `lucia@correo.cl` | persona |
+| `contacto@tallercfnorte.cl` | taller |
+
+> ⚠️ **Nada de esto es seguridad.** El directorio de cuentas es un array en el cliente y
+> la contraseña no se valida ni se guarda: no hay servidor contra el cual validarla, y
+> hashearla en el navegador no protegería nada. Las guardas de ruta son de experiencia
+> de usuario — un cliente siempre se las puede saltar. La autorización real tiene que
+> vivir en cada endpoint del backend, y está diseñada abajo.
+>
+> Las cuentas creadas en `/registro` quedan en el `localStorage` de ese origen. Sin
+> servidor no hay forma de compartirlas entre `app.` y `taller.carfollow.io`: por eso
+> elegir el tipo "del otro lado" te lleva a registrarte allá.
+
+## Las dos apps
+
+### Panel del taller
+
+Dashboard ordenado por urgencia, con búsqueda y ficha de auditoría que muestra quién
+tocó qué y cuándo. La columna **Próximo** y el estado de cada fila salen del cálculo,
+no de datos guardados.
+
+![Panel del taller](docs/taller.png)
+
+Los recordatorios se seleccionan y abren un panel con las acciones sobre el cliente —
+llamar, mandar el aviso por WhatsApp con el mensaje ya redactado, o saltar directo a
+registrar el trabajo con el vehículo preseleccionado:
+
+![Recordatorios con panel de acciones](docs/recordatorios.png)
+
+Cada vehículo tiene su ficha en `/vehiculos/:id`, con las próximas mantenciones, el
+historial completo y el audit trail de cada corrección:
+
+![Ficha del vehículo](docs/vehiculo.png)
+
+Tema claro incluido, con la misma paleta portada a valores accesibles:
+
+![Panel del taller en tema claro](docs/taller-claro.png)
+
+### App de la persona
+
+Garaje, detalle del vehículo con su historial, registro de mantenciones, reglas por
+pieza y alertas derivadas de las mismas reglas que usa el taller. En pantalla grande se
+muestra dentro de un dispositivo; en móvil el marco desaparece y la app ocupa toda la
+ventana.
+
+## Correr el proyecto
+
+Requiere **Node 20+** y **pnpm 10+**.
+
+```bash
+pnpm install
+pnpm dev          # ambas apps a la vez
+```
+
+| App | URL | Script individual |
+|---|---|---|
+| Persona (móvil) | http://localhost:5173 | `pnpm dev:persona` |
+| Taller (web) | http://localhost:5174 | `pnpm dev:taller` |
+
+Otros scripts: `pnpm build`, `pnpm typecheck`.
+
+> `pnpm lint` hoy ejecuta `tsc --noEmit`, igual que `typecheck`. No hay ESLint configurado
+> todavía y el README no va a decir lo contrario.
 
 ## Estructura
 
@@ -23,46 +155,17 @@ packages/
                componentes compartidos (Logo, StatusBadge, ProgressBar, AuthorPill…).
   types/       Tipos/DTOs compartidos (Vehicle, MaintenanceRecord, PartRule…).
   mock-data/   Datos de ejemplo derivados del diseño.
-project/       Diseño original exportado (referencia).
+project/       Diseño original exportado desde Claude Design (referencia).
 chats/         Transcripción de la conversación de diseño (referencia).
 ```
 
-## Requisitos
+Los datos viven en React state y se reinician al recargar.
 
-- Node 20+
-- pnpm 10+
+---
 
-## Desarrollo
-
-```bash
-pnpm install
-
-# ambas apps a la vez
-pnpm dev
-
-# o por separado
-pnpm dev:persona   # http://localhost:5173
-pnpm dev:taller    # http://localhost:5174
-```
-
-Otros scripts: `pnpm build`, `pnpm typecheck`.
-
-El tema (claro/oscuro) se alterna arriba a la derecha (persona) o en la barra lateral
-(taller) y se recuerda en `localStorage`.
-
-## Qué es navegable hoy
-
-- **Persona**: tabs Garaje / Historial / Alertas / Perfil; abrir un vehículo desde el
-  garaje; registrar una mantención (se guarda en memoria y aparece firmada en el
-  historial del vehículo); reglas por pieza.
-- **Taller**: navegación por la barra lateral; seleccionar una fila de la tabla
-  actualiza la ficha de auditoría; registrar un trabajo (aparece en "Trabajos
-  recientes", firmado por el taller).
-
-Los datos viven en memoria (React state) y se reinician al recargar. No hay
-persistencia ni autenticación todavía.
-
-## Plan de backend (siguiente etapa)
+<details>
+<summary><strong>Plan de backend</strong> — monolito modular NestJS + PostgreSQL + Prisma</summary>
+<br />
 
 Arquitectura pensada para el alcance actual, sin microservicios:
 
@@ -88,7 +191,11 @@ pieza en su propio servicio.
 - OAuth (Google) o magic link quedan abiertos para una iteración futura si hace
   falta reducir fricción de registro — no bloquean nada de lo de abajo.
 
-## Seguridad
+</details>
+
+<details>
+<summary><strong>Seguridad</strong> — JWT, IDOR, hashing de contraseñas, inyección SQL</summary>
+<br />
 
 - **Credenciales nunca en el frontend**: el frontend no guarda contraseñas, API
   keys ni secretos — solo el JWT del usuario logueado, en memoria/`sessionStorage`
@@ -117,12 +224,33 @@ pieza en su propio servicio.
   15–60 min) + **refresh token** más largo (7–30 días, rotable y revocable en
   Redis/DB) es más seguro que un token único de larga duración, porque si el
   access token se filtra, la ventana de abuso es corta. Si se prefiere simplicidad
-  para el MVP, un solo token de **12 h** (tu ejemplo) es una opción razonable
-  mientras no haya refresh implementado — quedaría como configuración (`JWT_EXPIRES_IN`)
-  fácil de ajustar después sin tocar código.
+  para el MVP, un solo token de **12 h** es una opción razonable mientras no haya
+  refresh implementado — quedaría como configuración (`JWT_EXPIRES_IN`) fácil de
+  ajustar después sin tocar código.
 
-- **Cifrado de contraseñas**: hash con **Argon2id** (o bcrypt con cost ≥ 12 si se
-  prefiere la opción más probada), nunca texto plano ni cifrado reversible.
+- **Hash de contraseñas — por qué NO SHA-256**: SHA-256 es un hash de propósito
+  general diseñado para ser *rápido*, y esa es exactamente la propiedad que no
+  se quiere acá. Una GPU moderna calcula del orden de **10¹⁰ SHA-256 por
+  segundo**, así que ante una filtración de la base de datos un diccionario
+  revienta las contraseñas comunes en minutos. Tampoco lleva sal por sí solo:
+  dos usuarios con la misma contraseña quedan con el mismo hash, y las rainbow
+  tables hacen el resto.
+
+  Lo correcto es un **KDF lento, salado y con costo configurable**. En orden de
+  preferencia:
+
+  | Algoritmo | Cuándo | Parámetros de partida |
+  |---|---|---|
+  | **Argon2id** ✅ | Elección por defecto — ganador del Password Hashing Competition, resistente a GPU y ASIC porque además de tiempo exige memoria | `m=19 MiB, t=2, p=1` (mínimo OWASP) |
+  | **scrypt** | Alternativa si Argon2 no está disponible en el runtime | `N=2^17, r=8, p=1` |
+  | **bcrypt** | Opción más probada y con más años de rodaje; tope de 72 bytes de entrada | `cost ≥ 12` |
+
+  En Node: `argon2` (binding nativo) o `node:crypto.scrypt`. El hash **siempre se
+  calcula en el servidor**: hacerlo en el navegador no protege nada — el hash
+  pasa a *ser* la contraseña (quien lo intercepte se autentica con él) y de todas
+  formas viaja por la red. El cliente manda la contraseña por HTTPS y el servidor
+  la hashea.
+
   Además: throttling de intentos de login (`@nestjs/throttler`) para frenar
   fuerza bruta, y no revelar en el error si fue el email o la contraseña la que
   falló.
@@ -136,13 +264,28 @@ pieza en su propio servicio.
   el DTO se descarta antes de llegar a la capa de datos, así que ni siquiera hay
   superficie para intentarlo desde los campos de perfil, vehículos, etc.
 
+- **TLS / HTTPS — es infraestructura, no código**: no se "agrega" a la app; se
+  termina en el reverse proxy. **Traefik** delante de todo con certificados
+  automáticos de **Let's Encrypt** (renovación sola cada 90 días), redirección
+  `301` de `:80` a `:443`, TLS 1.2+ y **HSTS** (`Strict-Transport-Security`, vía
+  `helmet`) para que el navegador ni intente HTTP después de la primera visita.
+  Las cookies —si en algún momento se usan en vez del header `Authorization`—
+  van `Secure`, `HttpOnly` y `SameSite=Lax`. En desarrollo local se sigue
+  trabajando sobre HTTP: el certificado se emite recién cuando hay un dominio
+  real apuntando al VPS.
+
 - **Otros mínimos de higiene** que quedan incluidos en el mismo esfuerzo: CORS
   restringido a los subdominios propios (`app.` / `taller.carfollow.io`), cabeceras
-  de seguridad con `helmet`, HTTPS en todo (ya cubierto por Traefik + Let's
-  Encrypt), y el historial de auditoría (quién firmó cada cambio) que ya es parte
-  del modelo de datos y sirve también como rastro de seguridad.
+  de seguridad con `helmet`, y el historial de auditoría (quién firmó cada cambio)
+  que ya es parte del modelo de datos y sirve también como rastro de seguridad.
 
-## Despliegue: Docker en un VPS propio
+</details>
+
+<details>
+<summary><strong>Despliegue y ADRs</strong> — Docker en VPS, Traefik, y por qué no Next.js</summary>
+<br />
+
+### Docker en un VPS propio
 
 - **Empaquetado**: cada pieza en su contenedor (`Dockerfile` multi-stage: build con
   pnpm → imagen final mínima). Las apps de Vite compilan a estático y se sirven con
@@ -165,7 +308,7 @@ pieza en su propio servicio.
   atiende el cuello de botella real, que normalmente es la base de datos (réplicas
   de lectura / pooling de conexiones) y las notificaciones (worker separado).
 
-### ADRs (decisiones de arquitectura)
+### ADRs
 
 - **Vite (SPA) en vez de Next.js**: hay un backend Nest dedicado, ambas apps están
   detrás de login (sin necesidad de SSR/SEO), y la app de la persona apunta a móvil
@@ -176,3 +319,5 @@ pieza en su propio servicio.
   proyecto, un VPS con `docker-compose` es más barato y da control total, sin atarse
   a un proveedor. Las imágenes Docker hacen la migración a un servicio gestionado
   trivial si el crecimiento lo justifica más adelante.
+
+</details>

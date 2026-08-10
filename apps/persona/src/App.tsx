@@ -1,7 +1,11 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Logo, ThemeToggle } from "@cf/ui";
 import { DataProvider } from "./store";
+import { SesionProvider, useSesion } from "./sesion";
 import { PhoneFrame } from "./PhoneFrame";
+import { Presentacion } from "./Presentacion";
+import { Login } from "./screens/Login";
+import { Registro } from "./screens/Registro";
 import { Garaje } from "./screens/Garaje";
 import { Historial } from "./screens/Historial";
 import { VehicleDetail } from "./screens/VehicleDetail";
@@ -12,61 +16,58 @@ import { Reglas } from "./screens/Reglas";
 
 export function App() {
   return (
-    <DataProvider>
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "var(--cf-bg)",
-          color: "var(--cf-text)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "32px 16px 56px",
-          gap: 24,
-        }}
-      >
-        <div
-          style={{
-            width: "100%",
-            maxWidth: 420,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 16,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <Logo size={40} radius={12} font={17} />
-            <div>
-              <div className="cf-display" style={{ fontWeight: 700, fontSize: 18, lineHeight: 1 }}>
-                Car Follow
-              </div>
-              <div className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-accent)", marginTop: 4 }}>
-                App de la persona
-              </div>
+    <SesionProvider>
+      <div className="cf-escenario">
+        <div className="cf-escenario-barra">
+          <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+            <Logo size={34} radius={10} font={14} />
+            <div className="cf-display" style={{ fontWeight: 700, fontSize: 16 }}>
+              Car Follow
             </div>
           </div>
           <ThemeToggle />
         </div>
 
-        <PhoneFrame showTabs={useTabsForRoute()}>
-          <Routes>
-            <Route path="/" element={<Garaje />} />
-            <Route path="/historial" element={<Historial />} />
-            <Route path="/vehiculo/:id" element={<VehicleDetail />} />
-            <Route path="/registrar" element={<Registrar />} />
-            <Route path="/alertas" element={<Alertas />} />
-            <Route path="/perfil" element={<Perfil />} />
-            <Route path="/perfil/reglas" element={<Reglas />} />
-          </Routes>
-        </PhoneFrame>
+        <Presentacion />
+        <Pantallas />
       </div>
-    </DataProvider>
+    </SesionProvider>
   );
 }
 
-import { useLocation } from "react-router-dom";
-function useTabsForRoute() {
-  const { pathname } = useLocation();
-  return pathname !== "/registrar";
+function Pantallas() {
+  const { sesion } = useSesion();
+  const { pathname, search } = useLocation();
+
+  if (!sesion) {
+    return (
+      <PhoneFrame showTabs={false}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/registro" element={<Registro />} />
+          {/* Guarda de ruta: sin sesión no se monta ninguna pantalla de la app, y
+              se recuerda a dónde iba para volver ahí después de entrar. */}
+          <Route path="*" element={<Navigate to="/login" replace state={{ desde: pathname + search }} />} />
+        </Routes>
+      </PhoneFrame>
+    );
+  }
+
+  return (
+    <DataProvider>
+      <PhoneFrame showTabs={pathname !== "/registrar"}>
+        <Routes>
+          <Route path="/login" element={<Navigate to="/" replace />} />
+          <Route path="/registro" element={<Navigate to="/" replace />} />
+          <Route path="/" element={<Garaje />} />
+          <Route path="/historial" element={<Historial />} />
+          <Route path="/vehiculo/:id" element={<VehicleDetail />} />
+          <Route path="/registrar" element={<Registrar />} />
+          <Route path="/alertas" element={<Alertas />} />
+          <Route path="/perfil" element={<Perfil />} />
+          <Route path="/perfil/reglas" element={<Reglas />} />
+        </Routes>
+      </PhoneFrame>
+    </DataProvider>
+  );
 }

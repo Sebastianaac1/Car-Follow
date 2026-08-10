@@ -1,0 +1,111 @@
+/* Escenario de desktop: la app es móvil, así que en una pantalla grande el
+   teléfono va a la derecha y el espacio que sobraba a la izquierda lo ocupa la
+   presentación del proyecto. */
+
+.cf-escenario {
+  position: relative;
+  min-height: 100vh;
+  background: radial-gradient(900px 520px at 12% -8%, var(--cf-accent-soft), transparent 70%), var(--cf-bg);
+  color: var(--cf-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 64px;
+  padding: 80px 48px 40px;
+}
+
+.cf-escenario-barra {
+  position: absolute;
+  top: 28px;
+  left: 48px;
+  right: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cf-presentacion {
+  max-width: 520px;
+}
+
+/* Tablet: la presentación se apila encima del teléfono. */
+@media (max-width: 1120px) {
+  .cf-escenario {
+    flex-direction: column;
+    gap: 44px;
+    padding: 92px 24px 56px;
+  }
+  .cf-escenario-barra {
+    left: 24px;
+    right: 24px;
+  }
+  .cf-presentacion {
+    max-width: 560px;
+  }
+}
+
+/* Teléfono: solo la app, sin marco ni presentación. */
+@media (max-width: 760px) {
+  .cf-escenario {
+    padding: 0;
+    gap: 0;
+    align-items: stretch;
+    background: var(--cf-bg);
+  }
+  .cf-escenario-barra,
+  .cf-presentacion {
+    display: none;
+  }
+}
+
+/* Marco del dispositivo. Vive en la app persona y no en @cf/ui porque el panel
+   del taller no lo usa. En pantallas chicas el marco desaparece: la app pasa a
+   ocupar toda la ventana, que es como se vería instalada en un teléfono real. */
+
+.cf-telefono {
+  width: 344px;
+  flex-shrink: 0;
+  padding: 12px;
+  border-radius: 46px;
+  background: linear-gradient(160deg, var(--cf-surface-2), var(--cf-surface));
+  border: 1px solid var(--cf-border);
+  box-shadow: 0 2px 0 rgba(255, 255, 255, 0.06) inset, 0 40px 80px -30px rgba(0, 0, 0, 0.75);
+}
+
+.cf-telefono-pantalla {
+  /* 144px = padding vertical del escenario (80+40) + padding del marco (24). */
+  height: min(660px, calc(100vh - 144px));
+  border-radius: 35px;
+  overflow: hidden;
+  background: var(--cf-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dynamic island. */
+.cf-isla {
+  width: 76px;
+  height: 20px;
+  border-radius: 99px;
+  background: #05070a;
+  border: 1px solid var(--cf-border);
+}
+
+@media (max-width: 760px) {
+  .cf-telefono {
+    width: 100%;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .cf-telefono-pantalla {
+    height: 100vh;
+    height: 100dvh;
+    border-radius: 0;
+  }
+  .cf-isla {
+    display: none;
+  }
+}

@@ -4,7 +4,7 @@ import { workshop } from "@cf/mock-data";
 const card: React.CSSProperties = {
   border: "1px solid var(--cf-border)",
   borderRadius: 14,
-  background: "var(--cf-bg)",
+  background: "var(--cf-surface)",
   padding: 18,
 };
 

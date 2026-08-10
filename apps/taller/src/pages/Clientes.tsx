@@ -12,7 +12,7 @@ export function Clientes() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
         {clients.map((c) => (
-          <div key={c.id} style={{ border: "1px solid var(--cf-border)", borderRadius: 14, background: "var(--cf-bg)", padding: 16 }}>
+          <div key={c.id} style={{ border: "1px solid var(--cf-border)", borderRadius: 14, background: "var(--cf-surface)", padding: 16 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
               <div
                 style={{

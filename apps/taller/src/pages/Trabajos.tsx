@@ -1,23 +1,21 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AuthorPill } from "@cf/ui";
 import { vehicleById, vehicles } from "@cf/mock-data";
 import { useData } from "../store";
 import { formatDate, km } from "../format";
 
 const label: React.CSSProperties = { fontSize: 11, color: "var(--cf-dim)", marginBottom: 6, fontWeight: 500 };
-const input: React.CSSProperties = {
-  border: "1px solid var(--cf-border)",
-  borderRadius: 10,
-  padding: "10px 12px",
-  background: "var(--cf-surface)",
-  fontSize: 13,
-  color: "var(--cf-text)",
-  width: "100%",
-};
+const input: React.CSSProperties = { borderRadius: 10, padding: "10px 12px", fontSize: 13, width: "100%" };
 
 export function Trabajos() {
   const { records, addJob } = useData();
-  const [vehicleId, setVehicleId] = useState(vehicles[0].id);
+  // La ficha del vehículo entra acá con ?vehiculo=<id> para no obligar a re-elegirlo.
+  const [params] = useSearchParams();
+  const desdeFicha = params.get("vehiculo");
+  const [vehicleId, setVehicleId] = useState(
+    vehicles.some((v) => v.id === desdeFicha) ? desdeFicha! : vehicles[0].id,
+  );
   const [title, setTitle] = useState("Cambio de aceite + filtro");
   const [date, setDate] = useState("2026-07-23");
   const [odometer, setOdometer] = useState("84.500");
@@ -43,14 +41,14 @@ export function Trabajos() {
       </div>
 
       <div style={{ display: "flex", gap: 22, alignItems: "flex-start" }}>
-        <div style={{ flex: 1, border: "1px solid var(--cf-border)", borderRadius: 16, background: "var(--cf-bg)", padding: 20 }}>
+        <div style={{ flex: 1, border: "1px solid var(--cf-border)", borderRadius: 16, background: "var(--cf-surface)", padding: 20 }}>
           <div className="cf-display" style={{ fontWeight: 600, fontSize: 16, marginBottom: 16 }}>
             Registrar trabajo
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <div style={label}>Vehículo</div>
-              <select value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} style={input}>
+              <select className="cf-input" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)} style={input}>
                 {vehicles.map((v) => (
                   <option key={v.id} value={v.id}>
                     {v.name} · {v.ownerName}
@@ -60,35 +58,23 @@ export function Trabajos() {
             </div>
             <div>
               <div style={label}>Trabajo / servicio</div>
-              <input value={title} onChange={(e) => setTitle(e.target.value)} style={input} />
+              <input className="cf-input" value={title} onChange={(e) => setTitle(e.target.value)} style={input} />
             </div>
             <div style={{ display: "flex", gap: 12 }}>
               <div style={{ flex: 1 }}>
                 <div style={label}>Fecha</div>
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={input} />
+                <input className="cf-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} style={input} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={label}>Kilometraje</div>
-                <input value={odometer} onChange={(e) => setOdometer(e.target.value)} style={{ ...input, fontFamily: "'IBM Plex Mono', monospace" }} />
+                <input className="cf-input cf-mono" value={odometer} onChange={(e) => setOdometer(e.target.value)} style={input} />
               </div>
             </div>
             <div>
               <div style={label}>Piezas (separadas por coma)</div>
-              <input value={partsText} onChange={(e) => setPartsText(e.target.value)} style={input} />
+              <input className="cf-input" value={partsText} onChange={(e) => setPartsText(e.target.value)} style={input} />
             </div>
-            <button
-              onClick={save}
-              style={{
-                height: 44,
-                borderRadius: 12,
-                border: "none",
-                background: "var(--cf-accent)",
-                color: "var(--cf-on-accent)",
-                fontWeight: 600,
-                fontSize: 14,
-                cursor: "pointer",
-              }}
-            >
+            <button className="cf-btn" onClick={save} style={{ height: 44, borderRadius: 12, fontSize: 14 }}>
               Guardar trabajo
             </button>
           </div>

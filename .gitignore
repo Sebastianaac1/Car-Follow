@@ -25,3 +25,6 @@ lerna-debug.log*
 
 .DS_Store
 .vite
+
+# Artefactos de build incremental de TypeScript
+*.tsbuildinfo

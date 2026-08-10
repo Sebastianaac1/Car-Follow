@@ -1,22 +1,43 @@
 import { useNavigate } from "react-router-dom";
 import { ProgressBar, StatusBadge } from "@cf/ui";
-import { nextServiceLabel, vehicles } from "@cf/mock-data";
-import type { Vehicle } from "@cf/types";
+import { nextUpcoming, vehicles, vehicleStatus } from "@cf/mock-data";
+import type { MaintenanceRecord, Vehicle } from "@cf/types";
+import { useData } from "../store";
+import { useSesion } from "../sesion";
+import { km } from "../format";
 
-const photo =
-  "repeating-linear-gradient(45deg,var(--cf-surface-2),var(--cf-surface-2) 9px,transparent 9px,transparent 18px)";
+/** Etiqueta y silueta de fondo por tipo de vehículo (viewBox 24). */
+const kindMeta: Record<Vehicle["kind"], { label: string; icon: string }> = {
+  auto: {
+    label: "Auto",
+    icon: "M5 17h14M4 17v-4l2-5h12l2 5v4M7 17v2M17 17v2M7.5 13h1M15.5 13h1",
+  },
+  moto: {
+    label: "Moto",
+    icon: "M6 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6M18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6M6 16h5l3-5h3M11 11l4 5M13 7.5h3",
+  },
+  camion: {
+    label: "Camión",
+    icon: "M2 6h13v10H9M2 6v10h1M15 9h3.5l2.5 3.5V16h-2M6.5 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4M18.5 18a2 2 0 1 0 0-4 2 2 0 0 0 0 4",
+  },
+  maquinaria: {
+    label: "Maquinaria",
+    icon: "M2 18h13v-3H2zM4 15v-3h6v3M10 12l4-5h2M16 7l3 2.5-2 3.5-3-1M4.5 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3M12.5 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3",
+  },
+};
 
-function VehicleCard({ v, onClick }: { v: Vehicle; onClick: () => void }) {
-  const next = nextServiceLabel[v.id];
+function VehicleCard({ v, records, onClick }: { v: Vehicle; records: MaintenanceRecord[]; onClick: () => void }) {
+  const next = nextUpcoming(v.id, records);
+  const status = vehicleStatus(v.id, records);
   return (
     <div
+      className="cf-card-tap"
       onClick={onClick}
       style={{
         border: "1px solid var(--cf-border)",
         borderRadius: 18,
         background: "var(--cf-surface)",
         overflow: "hidden",
-        cursor: "pointer",
       }}
     >
       <div
@@ -25,14 +46,30 @@ function VehicleCard({ v, onClick }: { v: Vehicle; onClick: () => void }) {
           display: "flex",
           alignItems: "flex-end",
           padding: 10,
-          background: photo,
+          background: "linear-gradient(135deg, var(--cf-surface-2), var(--cf-surface))",
           position: "relative",
+          overflow: "hidden",
         }}
       >
-        <span className="cf-mono" style={{ position: "absolute", top: 10, left: 12, fontSize: 10, color: "var(--cf-dim)" }}>
-          foto
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="var(--cf-dim)"
+          strokeWidth="1.1"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ position: "absolute", right: -14, top: -6, width: 116, height: 116, opacity: 0.16 }}
+          aria-hidden
+        >
+          <path d={kindMeta[v.kind].icon} />
+        </svg>
+        <span
+          className="cf-mono"
+          style={{ position: "absolute", top: 11, left: 12, fontSize: 10, letterSpacing: 0.4, color: "var(--cf-dim)" }}
+        >
+          {kindMeta[v.kind].label}
         </span>
-        <StatusBadge status={v.status} />
+        <StatusBadge status={status} />
       </div>
       <div style={{ padding: "12px 14px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
@@ -42,9 +79,9 @@ function VehicleCard({ v, onClick }: { v: Vehicle; onClick: () => void }) {
           </span>
         </div>
         <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)", margin: "8px 0 6px" }}>
-          {next?.text ?? `${v.odometer.toLocaleString("es-CL")} km`}
+          {km(v.odometer)} km{next && ` · ${next.part.toLowerCase()} en ${next.remainingLabel}`}
         </div>
-        {next && <ProgressBar value={next.progress} status={v.status} />}
+        {next && <ProgressBar value={next.progress} status={next.status} />}
       </div>
     </div>
   );
@@ -52,41 +89,58 @@ function VehicleCard({ v, onClick }: { v: Vehicle; onClick: () => void }) {
 
 export function Garaje() {
   const navigate = useNavigate();
-  const mine = vehicles.filter((v) => v.ownerId === "martin");
+  const { records } = useData();
+  const { sesion } = useSesion();
+  const mine = vehicles.filter((v) => v.ownerId === sesion?.ownerId);
 
   return (
     <div style={{ padding: "8px 20px 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
         <div>
-          <div style={{ fontSize: 12, color: "var(--cf-dim)" }}>Hola, Martín</div>
+          <div style={{ fontSize: 12, color: "var(--cf-dim)" }}>Hola, {sesion?.nombre.split(" ")[0]}</div>
           <div className="cf-display" style={{ fontWeight: 600, fontSize: 22 }}>
             Mis vehículos
           </div>
         </div>
-        <div
+        <button
+          className="cf-btn"
           onClick={() => navigate("/registrar")}
+          aria-label="Registrar mantención"
           style={{
             width: 38,
             height: 38,
             borderRadius: 12,
-            background: "var(--cf-accent)",
-            color: "var(--cf-on-accent)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: 22,
-            fontWeight: 600,
-            cursor: "pointer",
           }}
         >
           +
-        </div>
+        </button>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {mine.map((v) => (
-          <VehicleCard key={v.id} v={v} onClick={() => navigate(`/vehiculo/${v.id}`)} />
+          <VehicleCard key={v.id} v={v} records={records} onClick={() => navigate(`/vehiculo/${v.id}`)} />
         ))}
+        {mine.length === 0 && (
+          <div
+            style={{
+              border: "1px dashed var(--cf-border)",
+              borderRadius: 18,
+              padding: "28px 20px",
+              textAlign: "center",
+              fontSize: 13,
+              color: "var(--cf-dim)",
+              lineHeight: 1.55,
+            }}
+          >
+            Tu garaje está vacío.
+            <br />
+            Agrega tu primer vehículo con el botón <strong style={{ color: "var(--cf-accent)" }}>+</strong>.
+          </div>
+        )}
       </div>
     </div>
   );

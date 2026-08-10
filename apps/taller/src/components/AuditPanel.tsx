@@ -1,5 +1,6 @@
+import { Link } from "react-router-dom";
 import { AuthorPill } from "@cf/ui";
-import { upcomingByVehicle, vehicleById } from "@cf/mock-data";
+import { nextUpcoming, vehicleById } from "@cf/mock-data";
 import { useData } from "../store";
 import { formatDate, km } from "../format";
 
@@ -14,13 +15,20 @@ const microLabel: React.CSSProperties = {
 
 export function AuditPanel({ vehicleId }: { vehicleId: string }) {
   const vehicle = vehicleById(vehicleId);
-  const { recordsByVehicle } = useData();
+  const { records, recordsByVehicle } = useData();
   const record = recordsByVehicle(vehicleId)[0];
-  const upcoming = upcomingByVehicle[vehicleId]?.[0];
+  const upcoming = nextUpcoming(vehicleId, records);
 
   return (
-    <div style={{ border: "1px solid var(--cf-border)", borderRadius: 16, background: "var(--cf-bg)", padding: 18 }}>
-      <div style={microLabel}>Ficha · {vehicle?.name ?? "—"}</div>
+    <div style={{ border: "1px solid var(--cf-border)", borderRadius: 16, background: "var(--cf-surface)", padding: 18 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
+        <div style={microLabel}>Ficha · {vehicle?.name ?? "—"}</div>
+        {vehicle && (
+          <Link to={`/vehiculos/${vehicle.id}`} style={{ fontSize: 11.5, fontWeight: 600, whiteSpace: "nowrap" }}>
+            Ver ficha completa →
+          </Link>
+        )}
+      </div>
       <div className="cf-display" style={{ fontWeight: 600, fontSize: 17, marginBottom: 14 }}>
         {record?.title ?? "Sin registros"}
       </div>
@@ -30,7 +38,12 @@ export function AuditPanel({ vehicleId }: { vehicleId: string }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 18, fontSize: 12.5 }}>
             <Row label="Fecha" value={formatDate(record.date)} mono />
             <Row label="Kilometraje" value={`${km(record.odometer)} km`} mono />
-            <Row label="Próximo" value={nextLabel(record.nextRule, upcoming?.remainingLabel)} mono accent />
+            <Row
+              label="Próximo"
+              value={upcoming ? `${upcoming.part} · ${upcoming.remainingLabel}` : "—"}
+              mono
+              accent
+            />
             <Row label="Piezas" value={record.parts.join(", ")} />
           </div>
 
@@ -76,19 +89,6 @@ export function AuditPanel({ vehicleId }: { vehicleId: string }) {
       )}
     </div>
   );
-}
-
-function nextLabel(
-  rule: { intervalKm: number | null; intervalMonths: number | null } | undefined,
-  fallback: string | undefined,
-): string {
-  if (rule) {
-    const parts = [rule.intervalKm ? `${km(rule.intervalKm)} km` : null, rule.intervalMonths ? `${rule.intervalMonths} m` : null].filter(
-      Boolean,
-    );
-    if (parts.length) return parts.join(" / ");
-  }
-  return fallback ?? "—";
 }
 
 function Row({ label, value, mono, accent }: { label: string; value: string; mono?: boolean; accent?: boolean }) {

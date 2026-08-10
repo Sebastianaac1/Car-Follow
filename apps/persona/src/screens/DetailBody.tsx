@@ -1,10 +1,11 @@
-import { AuthorPill, ProgressBar } from "@cf/ui";
-import { upcomingByVehicle, vehicleById } from "@cf/mock-data";
+import { AuthorPill, ProgressBar, StatusBadge } from "@cf/ui";
+import { upcomingFor, vehicleById, vehicleStatus } from "@cf/mock-data";
 import { useData } from "../store";
 import { formatDate, km } from "../format";
 
-const photo =
-  "repeating-linear-gradient(45deg,var(--cf-surface-2),var(--cf-surface-2) 9px,transparent 9px,transparent 18px)";
+/* La cabecera va sin silueta del tipo de vehículo, a diferencia de las tarjetas
+   del garaje: acá el nombre del vehículo ya domina y no hay nada que aclarar. */
+const cabecera = "linear-gradient(135deg, var(--cf-surface-2), var(--cf-surface))";
 
 const sectionLabel: React.CSSProperties = {
   fontSize: 11,
@@ -16,10 +17,10 @@ const sectionLabel: React.CSSProperties = {
 
 export function DetailBody({ vehicleId, onBack }: { vehicleId: string; onBack?: () => void }) {
   const vehicle = vehicleById(vehicleId);
-  const { recordsByVehicle } = useData();
+  const { records: allRecords, recordsByVehicle } = useData();
   if (!vehicle) return <div style={{ padding: 20 }}>Vehículo no encontrado.</div>;
 
-  const upcoming = upcomingByVehicle[vehicleId] ?? [];
+  const upcoming = upcomingFor(vehicleId, allRecords);
   const records = recordsByVehicle(vehicleId);
 
   return (
@@ -27,7 +28,7 @@ export function DetailBody({ vehicleId, onBack }: { vehicleId: string; onBack?: 
       <div
         style={{
           height: 120,
-          background: photo,
+          background: cabecera,
           position: "relative",
           display: "flex",
           alignItems: "flex-end",
@@ -35,17 +36,40 @@ export function DetailBody({ vehicleId, onBack }: { vehicleId: string; onBack?: 
         }}
       >
         {onBack && (
-          <span onClick={onBack} style={{ position: "absolute", top: 10, left: 16, fontSize: 22, cursor: "pointer" }}>
+          <button
+            onClick={onBack}
+            aria-label="Volver"
+            className="cf-tap"
+            style={{
+              position: "absolute",
+              top: 12,
+              left: 14,
+              width: 30,
+              height: 30,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "1px solid var(--cf-border)",
+              borderRadius: 9,
+              background: "var(--cf-surface)",
+              color: "var(--cf-text)",
+              fontSize: 17,
+              lineHeight: 1,
+            }}
+          >
             ‹
-          </span>
+          </button>
         )}
-        <div>
-          <div className="cf-display" style={{ fontWeight: 600, fontSize: 20 }}>
-            {vehicle.name}
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", width: "100%", gap: 10 }}>
+          <div>
+            <div className="cf-display" style={{ fontWeight: 600, fontSize: 20 }}>
+              {vehicle.name}
+            </div>
+            <div className="cf-mono" style={{ fontSize: 12, color: "var(--cf-dim)" }}>
+              {vehicle.plate} · {km(vehicle.odometer)} km
+            </div>
           </div>
-          <div className="cf-mono" style={{ fontSize: 12, color: "var(--cf-dim)" }}>
-            {vehicle.plate} · {km(vehicle.odometer)} km
-          </div>
+          <StatusBadge status={vehicleStatus(vehicleId, allRecords)} />
         </div>
       </div>
 
@@ -74,15 +98,18 @@ export function DetailBody({ vehicleId, onBack }: { vehicleId: string; onBack?: 
                   {u.remainingLabel}
                 </span>
               </div>
-              <ProgressBar value={u.progress} status={u.status} height={5} />
+              <ProgressBar value={Math.min(1, u.progress)} status={u.status} height={5} />
               <div className="cf-mono" style={{ fontSize: 10, color: "var(--cf-dim)", marginTop: 6 }}>
                 {u.ruleLabel}
+              </div>
+              <div className="cf-mono" style={{ fontSize: 10, color: "var(--cf-dim)", marginTop: 3 }}>
+                desde {formatDate(u.since.date)} · {km(u.since.odometer)} km
               </div>
             </div>
           ))}
           {upcoming.length === 0 && (
             <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)" }}>
-              Sin próximos mantenimientos programados.
+              Sin mantenciones registradas todavía: no hay desde dónde contar el intervalo.
             </div>
           )}
         </div>

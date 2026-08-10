@@ -16,11 +16,11 @@ export function Logo({ size = 64, radius = 18, font = 26 }: { size?: number; rad
         width: size,
         height: size,
         borderRadius: radius,
-        background: "var(--cf-accent)",
+        background: "linear-gradient(150deg, var(--cf-accent), color-mix(in srgb, var(--cf-accent) 72%, #b91c1c))",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        boxShadow: "0 12px 30px -8px var(--cf-accent-soft)",
+        boxShadow: `0 ${Math.round(size / 5)}px ${Math.round(size / 2)}px -${Math.round(size / 5)}px rgba(249,115,22,.55)`,
         flexShrink: 0,
       }}
     >
@@ -34,34 +34,48 @@ export function Logo({ size = 64, radius = 18, font = 26 }: { size?: number; rad
   );
 }
 
+const sunPath = "M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4";
+const moonPath = "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8";
+
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const seg = (on: boolean): CSSProperties => ({
-    padding: "7px 14px",
-    borderRadius: 9,
-    fontSize: 13,
-    fontWeight: 600,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 30,
+    height: 26,
+    borderRadius: 7,
     cursor: "pointer",
     border: "none",
     background: on ? "var(--cf-accent)" : "transparent",
     color: on ? "var(--cf-on-accent)" : "var(--cf-dim)",
+    transition: "background .15s ease, color .15s ease",
   });
+  const icon = (d: string) => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={d} />
+    </svg>
+  );
   return (
     <div
+      role="group"
+      aria-label="Tema"
       style={{
-        display: "flex",
-        gap: 6,
-        padding: 5,
+        display: "inline-flex",
+        gap: 3,
+        padding: 3,
         border: "1px solid var(--cf-border)",
-        borderRadius: 12,
-        background: "var(--cf-surface)",
+        borderRadius: 10,
+        background: "var(--cf-bg)",
       }}
     >
-      <button onClick={() => setTheme("dark")} style={seg(theme === "dark")}>
-        ◑ Oscuro
+      <button onClick={() => setTheme("dark")} style={seg(theme === "dark")} aria-label="Tema oscuro" aria-pressed={theme === "dark"}>
+        {icon(moonPath)}
       </button>
-      <button onClick={() => setTheme("light")} style={seg(theme === "light")}>
-        ◐ Claro
+      <button onClick={() => setTheme("light")} style={seg(theme === "light")} aria-label="Tema claro" aria-pressed={theme === "light"}>
+        {icon(sunPath)}
       </button>
     </div>
   );

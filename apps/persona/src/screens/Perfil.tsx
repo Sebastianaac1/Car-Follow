@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useSesion } from "../sesion";
 
 const row: React.CSSProperties = {
   border: "1px solid var(--cf-border)",
@@ -13,6 +14,7 @@ const row: React.CSSProperties = {
 
 export function Perfil() {
   const navigate = useNavigate();
+  const { sesion, salir } = useSesion();
   return (
     <div style={{ padding: "14px 20px" }}>
       <div className="cf-display" style={{ fontWeight: 600, fontSize: 22, marginBottom: 4 }}>
@@ -38,10 +40,10 @@ export function Perfil() {
         >
           M
         </div>
-        <div>
-          <div style={{ fontWeight: 600, fontSize: 15 }}>Martín R.</div>
-          <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)" }}>
-            2 vehículos · 2 talleres vinculados
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 600, fontSize: 15 }}>{sesion?.nombre ?? "Martín R."}</div>
+          <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)", wordBreak: "break-all" }}>
+            {sesion?.email}
           </div>
         </div>
       </div>
@@ -70,6 +72,22 @@ export function Perfil() {
           </div>
           <span style={{ color: "var(--cf-accent)", fontSize: 18 }}>›</span>
         </div>
+
+        <button
+          onClick={salir}
+          className="cf-tap"
+          style={{
+            ...row,
+            width: "100%",
+            fontFamily: "inherit",
+            fontSize: 14,
+            fontWeight: 500,
+            color: "var(--cf-danger)",
+            marginTop: 4,
+          }}
+        >
+          Cerrar sesión
+        </button>
       </div>
     </div>
   );

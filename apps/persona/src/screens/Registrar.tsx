@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { vehicles } from "@cf/mock-data";
 import { useData } from "../store";
+import { useSesion } from "../sesion";
 
 const labelStyle: React.CSSProperties = { fontSize: 11, color: "var(--cf-dim)", marginBottom: 6, fontWeight: 500 };
 const inputStyle: React.CSSProperties = {
@@ -33,9 +34,10 @@ const services = ["Aceite motor", "Frenos", "Filtros", "+ otro"];
 export function Registrar() {
   const navigate = useNavigate();
   const { addRecord } = useData();
-  const mine = vehicles.filter((v) => v.ownerId === "martin");
+  const { sesion } = useSesion();
+  const mine = vehicles.filter((v) => v.ownerId === sesion?.ownerId);
 
-  const [vehicleId, setVehicleId] = useState(mine[0].id);
+  const [vehicleId, setVehicleId] = useState(mine[0]?.id ?? "");
   const [service, setService] = useState("Aceite motor");
   const [date, setDate] = useState("2026-07-06");
   const [odometer, setOdometer] = useState("84.320");
@@ -72,6 +74,14 @@ export function Registrar() {
     });
     navigate(`/vehiculo/${vehicleId}`);
   };
+
+  if (mine.length === 0) {
+    return (
+      <div style={{ padding: 20, fontSize: 13, color: "var(--cf-dim)", lineHeight: 1.5 }}>
+        Necesitas al menos un vehículo para registrar una mantención.
+      </div>
+    );
+  }
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
