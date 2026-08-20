@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { ProgressBar, StatusBadge } from "@cf/ui";
-import { nextUpcoming, vehicles, vehicleStatus } from "@cf/mock-data";
-import type { MaintenanceRecord, Vehicle } from "@cf/types";
-import { useData } from "../store";
+import type { UpcomingService, Vehicle } from "@cf/types";
+import { useApi } from "../api";
+import { Cargando, ErrorApi } from "../Estado";
 import { useSesion } from "../sesion";
 import { km } from "../format";
 
@@ -26,9 +26,13 @@ const kindMeta: Record<Vehicle["kind"], { label: string; icon: string }> = {
   },
 };
 
-function VehicleCard({ v, records, onClick }: { v: Vehicle; records: MaintenanceRecord[]; onClick: () => void }) {
-  const next = nextUpcoming(v.id, records);
-  const status = vehicleStatus(v.id, records);
+/**
+ * `next` es el recordatorio pendiente más urgente de este vehículo, o undefined si no
+ * tiene ninguno. El estado sale de ahí: la lista viene ordenada por urgencia desde el
+ * servidor, así que el peor es el primero y no hace falta recalcular nada.
+ */
+function VehicleCard({ v, next, onClick }: { v: Vehicle; next?: UpcomingService; onClick: () => void }) {
+  const status = next?.status ?? "ok";
   return (
     <div
       className="cf-card-tap"
@@ -89,9 +93,19 @@ function VehicleCard({ v, records, onClick }: { v: Vehicle; records: Maintenance
 
 export function Garaje() {
   const navigate = useNavigate();
-  const { records } = useData();
   const { sesion } = useSesion();
-  const mine = vehicles.filter((v) => v.ownerId === sesion?.ownerId);
+
+  // Dos peticiones y no una por vehículo: /vehiculos ya viene filtrado por dueño —el
+  // servidor lo saca del token— y /vehiculos/recordatorios trae lo pendiente de todos
+  // juntos. Un garaje con diez autos sigue siendo dos llamadas.
+  const flota = useApi<Vehicle[]>("/vehiculos");
+  const pendientes = useApi<UpcomingService[]>("/vehiculos/recordatorios");
+
+  if (flota.cargando || pendientes.cargando) return <Cargando que="tu garaje" />;
+  if (flota.error) return <ErrorApi mensaje={flota.error} onReintentar={flota.recargar} />;
+  if (pendientes.error) return <ErrorApi mensaje={pendientes.error} onReintentar={pendientes.recargar} />;
+
+  const mine = flota.datos ?? [];
 
   return (
     <div style={{ padding: "8px 20px 16px" }}>
@@ -122,7 +136,12 @@ export function Garaje() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         {mine.map((v) => (
-          <VehicleCard key={v.id} v={v} records={records} onClick={() => navigate(`/vehiculo/${v.id}`)} />
+          <VehicleCard
+            key={v.id}
+            v={v}
+            next={pendientes.datos?.find((u) => u.vehicleId === v.id)}
+            onClick={() => navigate(`/vehiculo/${v.id}`)}
+          />
         ))}
         {mine.length === 0 && (
           <div

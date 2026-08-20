@@ -1,28 +1,32 @@
 import { useNavigate } from "react-router-dom";
-import { upcomingFor, vehicleById, vehicles } from "@cf/mock-data";
-import { useData } from "../store";
-import { useSesion } from "../sesion";
+import type { MaintenanceRecord, UpcomingService, Vehicle } from "@cf/types";
+import { useApi } from "../api";
+import { Cargando, ErrorApi } from "../Estado";
 import { formatDate } from "../format";
 
 export function Alertas() {
   const navigate = useNavigate();
-  const { records } = useData();
-  const { sesion } = useSesion();
-  const mine = vehicles.filter((v) => v.ownerId === sesion?.ownerId);
 
-  // Las alertas salen de las mismas reglas que los recordatorios del taller.
-  const pendientes = mine
-    .flatMap((v) => upcomingFor(v.id, records))
-    .filter((u) => u.status !== "ok")
-    .sort((a, b) => b.progress - a.progress);
+  // El servidor ya filtra lo que no está ok y lo ordena por urgencia: es la misma cuenta
+  // que ven los recordatorios del taller, hecha una sola vez y en un solo lugar.
+  const pendientes = useApi<UpcomingService[]>("/vehiculos/recordatorios");
+  // Los nombres de los vehículos no vienen en el recordatorio, así que la flota se pide
+  // aparte para poder decir "Toyota Hilux" en vez de un id.
+  const flota = useApi<Vehicle[]>("/vehiculos");
+  const historial = useApi<MaintenanceRecord[]>("/vehiculos/mantenciones");
 
-  // Avisos de lo que el taller escribió en tu historial, lo más reciente primero.
-  const delTaller = records
-    .filter((r) => r.author.role === "taller" && mine.some((v) => v.id === r.vehicleId))
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 2);
+  if (pendientes.cargando || flota.cargando || historial.cargando) return <Cargando que="tus alertas" />;
+  if (pendientes.error) return <ErrorApi mensaje={pendientes.error} onReintentar={pendientes.recargar} />;
+  if (flota.error) return <ErrorApi mensaje={flota.error} onReintentar={flota.recargar} />;
+  if (historial.error) return <ErrorApi mensaje={historial.error} onReintentar={historial.recargar} />;
 
-  const vacio = pendientes.length === 0 && delTaller.length === 0;
+  const nombreDe = (id: string) => flota.datos?.find((v) => v.id === id)?.name ?? "tu vehículo";
+
+  // Avisos de lo que el taller escribió en tu historial, lo más reciente primero. Viene
+  // ordenado por fecha desde el servidor.
+  const delTaller = (historial.datos ?? []).filter((r) => r.author.role === "taller").slice(0, 2);
+
+  const vacio = (pendientes.datos ?? []).length === 0 && delTaller.length === 0;
 
   return (
     <div style={{ padding: "14px 20px" }}>
@@ -31,9 +35,8 @@ export function Alertas() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {pendientes.map((u) => {
+        {(pendientes.datos ?? []).map((u) => {
           const vencido = u.status === "vencido";
-          const vehicle = vehicleById(u.vehicleId)!;
           return (
             <div
               key={u.id}
@@ -51,7 +54,7 @@ export function Alertas() {
                   {u.part} {vencido ? "vencido" : "pronto"}
                 </span>
                 <span className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-dim)" }}>
-                  {vehicle.name}
+                  {nombreDe(u.vehicleId)}
                 </span>
               </div>
               <div style={{ fontSize: 12.5, color: "var(--cf-text)", lineHeight: 1.45 }}>
@@ -107,8 +110,7 @@ export function Alertas() {
               </span>
             </div>
             <div style={{ fontSize: 12.5, lineHeight: 1.45 }}>
-              {r.author.name} añadió “{r.title.toLowerCase()}” a tu {vehicleById(r.vehicleId)?.name}. Revísalo y
-              confírmalo.
+              {r.author.name} añadió “{r.title.toLowerCase()}” a tu {nombreDe(r.vehicleId)}. Revísalo y confírmalo.
             </div>
           </div>
         ))}

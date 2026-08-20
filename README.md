@@ -36,8 +36,10 @@ las dos entradas con su firma y su hora.
 | **Criterio, no abstracción** | El repo sigue reglas de decisión explícitas: regla de tres, prohibido el parámetro-bandera, sin indirección de un solo uso. `formatDate` está duplicada a propósito porque son dos formatos distintos, no una función con un flag. |
 | **Arquitectura pensada** | El plan de backend, el modelo de autenticación y las decisiones de seguridad están razonados abajo, incluyendo por qué **no** se usa Next.js acá. |
 
-> **Estado:** prototipo navegable con datos en memoria. No hay backend, persistencia ni
-> tests todavía — el plan del backend está más abajo y aún no existe en código.
+> **Estado:** prototipo navegable con datos en memoria y sin tests. El backend ya existe en
+> su propio repo ([BF-Car-Follow](https://github.com/Sebastianaac1/BF-Car-Follow)) con
+> autenticación y vehículos funcionando sobre PostgreSQL, pero **este repo todavía no lo
+> consume**: las pantallas leen de `@cf/mock-data`. El plan que se siguió está más abajo.
 
 ### Cómo se derivan los recordatorios
 
@@ -146,18 +148,61 @@ Otros scripts: `pnpm build`, `pnpm typecheck`.
 
 ```
 apps/
-  persona/     App de la persona (React + Vite, móvil). Garaje, detalle+historial,
-               registrar mantención, reglas por pieza, alertas.
-  taller/      Panel del taller (React + Vite, web). Dashboard con KPIs, tabla de
-               vehículos, ficha con auditoría, clientes, trabajos, recordatorios.
+  persona/     App móvil de la persona dueña del vehículo   (:5173)
+  taller/      Panel web del taller                          (:5174)
 packages/
-  ui/          Design system CF: tokens de color, ThemeProvider (claro/oscuro),
-               componentes compartidos (Logo, StatusBadge, ProgressBar, AuthorPill…).
-  types/       Tipos/DTOs compartidos (Vehicle, MaintenanceRecord, PartRule…).
-  mock-data/   Datos de ejemplo derivados del diseño.
-project/       Diseño original exportado desde Claude Design (referencia).
-chats/         Transcripción de la conversación de diseño (referencia).
+  ui/          Design system: tokens, tema y componentes compartidos
+  types/       El contrato de tipos entre las dos apps y el backend
+  mock-data/   Datos de ejemplo + la derivación de recordatorios
+docs/          Capturas usadas en este README
+project/       Diseño original exportado desde Claude Design (referencia)
 ```
+
+Las dos apps **nunca se importan entre sí**. Si ambas necesitan lo mismo, va a un package;
+si lo usa una sola, se queda en esa app.
+
+### `packages/` — lo compartido
+
+| | Qué hace |
+|---|---|
+| `types/` | **El contrato.** `Vehicle`, `MaintenanceRecord`, `PartRule`, `Revision`, `Account`… Es el único lugar de los DTOs, y el backend devuelve exactamente estas formas. Cambiar un tipo acá rompe la compilación de las dos apps a la vez, que es justo lo que se quiere. |
+| `ui/` | El design system. `theme.ts` tiene la paleta en tokens CSS, `ThemeProvider.tsx` persiste claro/oscuro, `components.tsx` trae `Logo`, `StatusBadge`, `ProgressBar`, `AuthorPill` y `Card`, y `styles.css` los estilos base. Solo entra lo que usan **ambas** apps. |
+| `mock-data/` | **Acá vive la lógica de negocio del prototipo.** Además de los datos de ejemplo, calcula los recordatorios: `upcomingFor()`, `nextUpcoming()` y `vehicleStatus()`. También finge las cuentas con `accountByEmail()` y `registerAccount()`. Es lo que se muda al backend cuando exista. |
+
+### `apps/persona/src/` — la app móvil
+
+| | Qué hace |
+|---|---|
+| `main.tsx` | El arranque: monta React con el `ThemeProvider` y el router. |
+| `App.tsx` | **El mapa de rutas y la guarda.** Sin sesión solo existen `/login` y `/registro`; el resto redirige recordando a dónde iba. Con sesión se monta el `DataProvider` y las ocho pantallas. |
+| `sesion.tsx` | Quién dice ser el usuario. Guarda en `sessionStorage` bajo `cf-sesion-persona`. Nadie valida nada todavía. |
+| `store.tsx` | El estado compartido: `records`, `rules` y `addRecord()`. Se reinicia al recargar. |
+| `format.ts` | `km()` y `formatDate()`. Da `04 mar 2025` — distinto del taller **a propósito**. |
+| `PhoneFrame.tsx` | El marco de teléfono y la tab bar de cuatro pestañas que envuelve cada pantalla. |
+| `Presentacion.tsx` | El bloque que explica el prototipo alrededor del teléfono. |
+| `screens/` | Una pantalla por archivo: `Garaje`, `VehicleDetail` + `DetailBody`, `Registrar`, `Alertas`, `Historial`, `Perfil`, `Reglas`, `Login` y `Registro`. |
+
+### `apps/taller/src/` — el panel web
+
+Misma estructura, otra forma. Los archivos que se repiten de nombre **no son el mismo archivo**.
+
+| | Qué hace |
+|---|---|
+| `App.tsx` | Rutas y guarda, igual que persona. Con sesión, todo se monta dentro del `Layout`. |
+| `Layout.tsx` | La barra lateral: navegación, nombre y plan del taller, toggle de tema y cerrar sesión. Es el equivalente del `PhoneFrame`. |
+| `sesion.tsx` | Igual que en persona pero con la clave `cf-sesion-taller`: son dos sesiones separadas en dos orígenes distintos. |
+| `store.tsx` | Estado del panel. Su `addJob()` firma siempre como el taller, nunca como la persona. |
+| `format.ts` | Da `04/03/2025`. La otra mitad de la duplicación deliberada. |
+| `pages/` | `Dashboard` (KPIs), `Vehiculos` + `VehiculoDetalle`, `Clientes`, `Trabajos`, `Recordatorios`, `Ajustes`, `Login` y `Registro`. |
+| `components/AuditPanel.tsx` | El panel de auditoría de un vehículo. Solo lo usa el taller, así que se queda acá y no sube a `@cf/ui`. |
+
+### Configuración en la raíz
+
+| | Qué hace |
+|---|---|
+| `turbo.json` | Define las tareas. `build` y `typecheck` dependen de `^build`: los packages se construyen antes que las apps. |
+| `pnpm-workspace.yaml` | Declara que `apps/*` y `packages/*` son miembros del workspace. Es lo que hace que `workspace:*` resuelva. |
+| `tsconfig.base.json` | Los flags que heredan los cinco paquetes, cada uno con su propio `tsconfig.json` que lo extiende. |
 
 Los datos viven en React state y se reinician al recargar.
 

@@ -20,7 +20,7 @@ export function Perfil() {
       <div className="cf-display" style={{ fontWeight: 600, fontSize: 22, marginBottom: 4 }}>
         Perfil
       </div>
-      <div style={{ fontSize: 12, color: "var(--cf-dim)", marginBottom: 18 }}>Martín R. · plan gratuito</div>
+      <div style={{ fontSize: 12, color: "var(--cf-dim)", marginBottom: 18 }}>{sesion?.nombre} · plan gratuito</div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
         <div
@@ -38,10 +38,10 @@ export function Perfil() {
             fontSize: 20,
           }}
         >
-          M
+          {sesion?.nombre.charAt(0).toUpperCase() ?? "?"}
         </div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 15 }}>{sesion?.nombre ?? "Martín R."}</div>
+          <div style={{ fontWeight: 600, fontSize: 15 }}>{sesion?.nombre}</div>
           <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)", wordBreak: "break-all" }}>
             {sesion?.email}
           </div>
@@ -58,20 +58,10 @@ export function Perfil() {
           </div>
           <span style={{ color: "var(--cf-accent)", fontSize: 18 }}>›</span>
         </div>
-        <div style={row}>
-          <div>
-            <div style={{ fontWeight: 500, fontSize: 14 }}>Talleres vinculados</div>
-            <div style={{ fontSize: 11.5, color: "var(--cf-dim)", marginTop: 3 }}>Taller CF Norte</div>
-          </div>
-          <span style={{ color: "var(--cf-accent)", fontSize: 18 }}>›</span>
-        </div>
-        <div style={row}>
-          <div>
-            <div style={{ fontWeight: 500, fontSize: 14 }}>Notificaciones</div>
-            <div style={{ fontSize: 11.5, color: "var(--cf-dim)", marginTop: 3 }}>Push y correo</div>
-          </div>
-          <span style={{ color: "var(--cf-accent)", fontSize: 18 }}>›</span>
-        </div>
+        {/* "Talleres vinculados" y "Notificaciones" se fueron: mostraban un taller fijo y
+            un ajuste que no existe. Hoy la persona no tiene forma de saber qué talleres
+            ven sus vehículos (historia 7.2) ni hay avisos que configurar (historia 5.4).
+            Vuelven cuando haya algo real detrás. */}
 
         <button
           onClick={salir}

@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logo } from "@cf/ui";
-import { accountByEmail } from "@cf/mock-data";
+import type { Account } from "@cf/types";
+import { api } from "../api";
 import { useSesion } from "../sesion";
 
 /** El panel del taller corre en su propio origen. */
@@ -21,22 +22,32 @@ export function Login() {
   const [email, setEmail] = useState("martin@correo.cl");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
-  const enviar = (e: FormEvent) => {
+  const enviar = async (e: FormEvent) => {
     e.preventDefault();
+    setEnviando(true);
+    setError(null);
 
-    // El rol no se elige: se busca la cuenta y se descubre qué es.
-    const cuenta = accountByEmail(email);
-    if (!cuenta) {
-      setError("No hay ninguna cuenta con ese correo.");
-      return;
+    try {
+      // El rol sigue sin elegirse: se manda correo y clave, y el rol viene en la
+      // respuesta. El servidor responde lo mismo si el correo no existe o si la
+      // contraseña está mal, así que este mensaje no delata qué correos hay registrados.
+      const { token, cuenta } = await api<{ token: string; cuenta: Account }>("/auth/login", {
+        metodo: "POST",
+        cuerpo: { email, password },
+      });
+
+      if (cuenta.role !== "persona") {
+        window.location.href = URL_TALLER;
+        return;
+      }
+      entrar({ token, email: cuenta.email, nombre: cuenta.name });
+      navigate(destino, { replace: true });
+    } catch (e) {
+      setError((e as Error).message);
+      setEnviando(false);
     }
-    if (cuenta.role !== "persona") {
-      window.location.href = URL_TALLER;
-      return;
-    }
-    entrar({ email: cuenta.email, nombre: cuenta.name, ownerId: cuenta.ownerId ?? "" });
-    navigate(destino, { replace: true });
   };
 
   return (
@@ -74,7 +85,7 @@ export function Login() {
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         autoComplete="current-password"
-        placeholder="cualquier valor sirve"
+        required
         style={{ ...campo, marginBottom: error ? 11 : 16 }}
       />
 
@@ -84,8 +95,13 @@ export function Login() {
         </div>
       )}
 
-      <button className="cf-btn" type="submit" style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14 }}>
-        Entrar
+      <button
+        className="cf-btn"
+        type="submit"
+        disabled={enviando}
+        style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14, opacity: enviando ? 0.6 : 1 }}
+      >
+        {enviando ? "Entrando…" : "Entrar"}
       </button>
 
       <div style={{ fontSize: 12, color: "var(--cf-dim)", marginTop: 14 }}>
@@ -95,9 +111,8 @@ export function Login() {
       <div style={{ flex: 1, minHeight: 14 }} />
 
       <p style={{ fontSize: 10.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: 0 }}>
-        <strong style={{ color: "var(--cf-text)" }}>Demo sin backend.</strong> El tipo de cuenta se resuelve buscando el
-        correo en un directorio local; si la cuenta es de taller te mandamos al panel web. La contraseña no se valida ni
-        se guarda en ninguna parte.
+        El tipo de cuenta no se elige: sale de la cuenta al entrar, y si es de taller te mandamos al panel web. La
+        contraseña viaja al servidor, que la compara contra un hash Argon2id — nunca se guarda en el navegador.
       </p>
     </form>
   );

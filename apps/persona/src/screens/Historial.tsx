@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { vehicles } from "@cf/mock-data";
-import { useSesion } from "../sesion";
+import type { Vehicle } from "@cf/types";
+import { useApi } from "../api";
+import { Cargando, ErrorApi } from "../Estado";
 import { DetailBody } from "./DetailBody";
 
 export function Historial() {
-  const { sesion } = useSesion();
-  const mine = vehicles.filter((v) => v.ownerId === sesion?.ownerId);
-  const [selected, setSelected] = useState(mine[0]?.id ?? "");
+  const flota = useApi<Vehicle[]>("/vehiculos");
+  // Cuál pestaña está elegida. Empieza en null y cae al primer vehículo cuando llegan:
+  // guardar el id en el estado inicial no sirve, porque al montar todavía no hay lista.
+  const [selected, setSelected] = useState<string | null>(null);
 
+  if (flota.cargando) return <Cargando que="tus vehículos" />;
+  if (flota.error) return <ErrorApi mensaje={flota.error} onReintentar={flota.recargar} />;
+
+  const mine = flota.datos ?? [];
   if (mine.length === 0) {
     return (
       <div style={{ padding: "20px", fontSize: 13, color: "var(--cf-dim)", lineHeight: 1.5 }}>
@@ -16,11 +22,13 @@ export function Historial() {
     );
   }
 
+  const actual = selected ?? mine[0].id;
+
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", gap: 7, padding: "14px 20px 4px", flexWrap: "wrap" }}>
         {mine.map((v) => {
-          const on = v.id === selected;
+          const on = v.id === actual;
           return (
             <span
               key={v.id}
@@ -41,7 +49,7 @@ export function Historial() {
           );
         })}
       </div>
-      <DetailBody vehicleId={selected} />
+      <DetailBody vehicleId={actual} />
     </div>
   );
 }

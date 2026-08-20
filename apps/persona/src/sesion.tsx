@@ -3,20 +3,18 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from "re
 /**
  * Sesión de la app de la persona.
  *
- * Prototipo: no hay servidor que valide nada. Esto solo recuerda quién dijo ser
- * el usuario para poder enrutar y mostrar su nombre. La verificación real
- * (login contra la API, JWT firmado, guard de propiedad por endpoint) vive en el
- * plan de backend del README y todavía no existe en código.
+ * El token lo firma el backend y viaja en cada petición dentro del header Authorization.
+ * Acá solo se guarda; la app nunca lo abre ni lee lo que dice adentro.
  *
- * Se guarda en sessionStorage y no en localStorage a propósito: es lo mismo que
- * hará el JWT cuando exista, para reducir la ventana de exposición ante XSS.
+ * Se guarda en sessionStorage y no en localStorage a propósito: reduce la ventana de
+ * exposición ante XSS. El precio es que cerrar la pestaña cierra la sesión.
  */
 const CLAVE = "cf-sesion-persona";
 
 export interface Sesion {
+  token: string;
   email: string;
   nombre: string;
-  ownerId: string;
 }
 
 interface SesionContextValue {
@@ -27,7 +25,8 @@ interface SesionContextValue {
 
 const SesionContext = createContext<SesionContextValue | null>(null);
 
-function leer(): Sesion | null {
+/** Lee la sesión guardada. La usa api.ts para sacar el token sin pasar por React. */
+export function leerSesion(): Sesion | null {
   try {
     const crudo = sessionStorage.getItem(CLAVE);
     return crudo ? (JSON.parse(crudo) as Sesion) : null;
@@ -36,8 +35,13 @@ function leer(): Sesion | null {
   }
 }
 
+/** Borra la sesión desde fuera de React: api.ts la llama cuando el backend responde 401. */
+export function cerrarSesion() {
+  sessionStorage.removeItem(CLAVE);
+}
+
 export function SesionProvider({ children }: { children: ReactNode }) {
-  const [sesion, setSesion] = useState<Sesion | null>(leer);
+  const [sesion, setSesion] = useState<Sesion | null>(leerSesion);
 
   const value = useMemo<SesionContextValue>(
     () => ({
@@ -47,7 +51,7 @@ export function SesionProvider({ children }: { children: ReactNode }) {
         setSesion(s);
       },
       salir: () => {
-        sessionStorage.removeItem(CLAVE);
+        cerrarSesion();
         setSesion(null);
       },
     }),

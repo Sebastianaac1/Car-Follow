@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Logo, ThemeToggle } from "@cf/ui";
-import { DataProvider } from "./store";
 import { SesionProvider, useSesion } from "./sesion";
 import { PhoneFrame } from "./PhoneFrame";
 import { Presentacion } from "./Presentacion";
@@ -53,21 +52,21 @@ function Pantallas() {
     );
   }
 
+  // Ya no hay DataProvider: cada pantalla pide lo suyo con useApi, así que lo que se ve
+  // es siempre lo que se acaba de traer y no una copia en memoria que hay que sincronizar.
   return (
-    <DataProvider>
-      <PhoneFrame showTabs={pathname !== "/registrar"}>
-        <Routes>
-          <Route path="/login" element={<Navigate to="/" replace />} />
-          <Route path="/registro" element={<Navigate to="/" replace />} />
-          <Route path="/" element={<Garaje />} />
-          <Route path="/historial" element={<Historial />} />
-          <Route path="/vehiculo/:id" element={<VehicleDetail />} />
-          <Route path="/registrar" element={<Registrar />} />
-          <Route path="/alertas" element={<Alertas />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/perfil/reglas" element={<Reglas />} />
-        </Routes>
-      </PhoneFrame>
-    </DataProvider>
+    <PhoneFrame showTabs={pathname !== "/registrar"}>
+      <Routes>
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/registro" element={<Navigate to="/" replace />} />
+        <Route path="/" element={<Garaje />} />
+        <Route path="/historial" element={<Historial />} />
+        <Route path="/vehiculo/:id" element={<VehicleDetail />} />
+        <Route path="/registrar" element={<Registrar />} />
+        <Route path="/alertas" element={<Alertas />} />
+        <Route path="/perfil" element={<Perfil />} />
+        <Route path="/perfil/reglas" element={<Reglas />} />
+      </Routes>
+    </PhoneFrame>
   );
 }

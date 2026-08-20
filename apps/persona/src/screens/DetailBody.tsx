@@ -1,6 +1,7 @@
 import { AuthorPill, ProgressBar, StatusBadge } from "@cf/ui";
-import { upcomingFor, vehicleById, vehicleStatus } from "@cf/mock-data";
-import { useData } from "../store";
+import type { MaintenanceRecord, UpcomingService, Vehicle } from "@cf/types";
+import { useApi } from "../api";
+import { Cargando, ErrorApi } from "../Estado";
 import { formatDate, km } from "../format";
 
 /* La cabecera va sin silueta del tipo de vehículo, a diferencia de las tarjetas
@@ -16,12 +17,25 @@ const sectionLabel: React.CSSProperties = {
 };
 
 export function DetailBody({ vehicleId, onBack }: { vehicleId: string; onBack?: () => void }) {
-  const vehicle = vehicleById(vehicleId);
-  const { records: allRecords, recordsByVehicle } = useData();
+  // Tres peticiones porque son tres cosas distintas y esta pantalla las muestra todas.
+  // Un vehículo que no es tuyo responde 404 igual que uno que no existe, así que acá no
+  // hay forma de distinguirlos — que es exactamente la idea.
+  const ficha = useApi<Vehicle>(`/vehiculos/${vehicleId}`);
+  const proximos = useApi<UpcomingService[]>(`/vehiculos/${vehicleId}/proximos`);
+  const historial = useApi<MaintenanceRecord[]>(`/vehiculos/${vehicleId}/mantenciones`);
+
+  if (ficha.cargando || proximos.cargando || historial.cargando) return <Cargando que="el vehículo" />;
+  if (ficha.error) return <ErrorApi mensaje={ficha.error} onReintentar={ficha.recargar} />;
+  if (proximos.error) return <ErrorApi mensaje={proximos.error} onReintentar={proximos.recargar} />;
+  if (historial.error) return <ErrorApi mensaje={historial.error} onReintentar={historial.recargar} />;
+
+  const vehicle = ficha.datos;
   if (!vehicle) return <div style={{ padding: 20 }}>Vehículo no encontrado.</div>;
 
-  const upcoming = upcomingFor(vehicleId, allRecords);
-  const records = recordsByVehicle(vehicleId);
+  const upcoming = proximos.datos ?? [];
+  const records = historial.datos ?? [];
+  // La lista viene ordenada por urgencia: el estado del vehículo es el del primero.
+  const status = upcoming[0]?.status ?? "ok";
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
@@ -69,7 +83,7 @@ export function DetailBody({ vehicleId, onBack }: { vehicleId: string; onBack?: 
               {vehicle.plate} · {km(vehicle.odometer)} km
             </div>
           </div>
-          <StatusBadge status={vehicleStatus(vehicleId, allRecords)} />
+          <StatusBadge status={status} />
         </div>
       </div>
 

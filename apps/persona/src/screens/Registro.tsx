@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo } from "@cf/ui";
-import { accountByEmail, registerAccount } from "@cf/mock-data";
+import type { Account } from "@cf/types";
+import { api } from "../api";
 import { useSesion } from "../sesion";
 
 /** El panel del taller corre en su propio origen. */
@@ -23,28 +24,35 @@ export function Registro() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
-  const enviar = (e: FormEvent) => {
+  const enviar = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Las cuentas de taller se crean en la otra app: sin servidor no hay un
-    // directorio compartido entre los dos orígenes.
+    // Las cuentas de taller se crean desde el panel web: es la misma API, pero el panel
+    // pide los datos del negocio y no los de una persona.
     if (tipo === "taller") {
       window.location.href = URL_TALLER;
       return;
     }
-    if (accountByEmail(email)) {
-      setError("Ya existe una cuenta con ese correo.");
-      return;
-    }
 
-    // El ownerId nuevo no tiene vehículos: el garaje arranca vacío, como debe ser.
-    // La contraseña no se guarda: no hay servidor que la reciba y hashearla en el
-    // cliente no protegería nada.
-    const ownerId = `u-${Date.now()}`;
-    registerAccount({ email: email.trim(), role: "persona", name: nombre.trim(), ownerId });
-    entrar({ email: email.trim(), nombre: nombre.trim(), ownerId });
-    navigate("/", { replace: true });
+    setEnviando(true);
+    setError(null);
+
+    try {
+      // El 409 por correo repetido lo decide el servidor: acá no hay forma de saber qué
+      // correos existen, y así debe ser.
+      const { token, cuenta } = await api<{ token: string; cuenta: Account }>("/auth/registro", {
+        metodo: "POST",
+        cuerpo: { email: email.trim(), password, nombre: nombre.trim(), rol: "persona" },
+      });
+      // El garaje arranca vacío: la cuenta nueva todavía no tiene ningún vehículo.
+      entrar({ token, email: cuenta.email, nombre: cuenta.name });
+      navigate("/", { replace: true });
+    } catch (e) {
+      setError((e as Error).message);
+      setEnviando(false);
+    }
   };
 
   return (
@@ -123,6 +131,8 @@ export function Registro() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
             required
+            minLength={8}
+            placeholder="mínimo 8 caracteres"
             style={{ ...campo, marginBottom: error ? 11 : 16 }}
           />
         </>
@@ -134,8 +144,13 @@ export function Registro() {
         </div>
       )}
 
-      <button className="cf-btn" type="submit" style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14 }}>
-        {tipo === "taller" ? "Ir al panel del taller →" : "Crear cuenta"}
+      <button
+        className="cf-btn"
+        type="submit"
+        disabled={enviando}
+        style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14, opacity: enviando ? 0.6 : 1 }}
+      >
+        {tipo === "taller" ? "Ir al panel del taller →" : enviando ? "Creando…" : "Crear cuenta"}
       </button>
 
       <div style={{ fontSize: 12, color: "var(--cf-dim)", marginTop: 14 }}>
@@ -145,8 +160,8 @@ export function Registro() {
       <div style={{ flex: 1, minHeight: 14 }} />
 
       <p style={{ fontSize: 10.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: 0 }}>
-        <strong style={{ color: "var(--cf-text)" }}>Demo sin backend.</strong> La cuenta queda en el almacenamiento de
-        este navegador. La contraseña no se guarda en ninguna parte.
+        La cuenta se crea en el servidor. La contraseña se guarda como un hash Argon2id y no vuelve nunca: ni en esta
+        respuesta ni en ninguna otra.
       </p>
     </form>
   );
