@@ -1,37 +1,70 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { StatusBadge } from "@cf/ui";
-import { nextUpcoming, vehicles, vehicleStatus, workshop } from "@cf/mock-data";
-import { useData } from "../store";
+import type { MaintenanceRecord, UpcomingService, Vehicle } from "@cf/types";
+import { useApi } from "../api";
+import { Cargando, ErrorApi } from "../Estado";
 import { AuditPanel } from "../components/AuditPanel";
 
 const gridCols = "1.4fr 1fr 1.1fr 0.8fr";
 
+/** Prefijo AAAA-MM del mes corriente, en hora local: es el mes que cuenta quien mira. */
+function mesActual(): string {
+  const hoy = new Date();
+  return `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export function Dashboard() {
   const navigate = useNavigate();
-  const { records } = useData();
-  const [selected, setSelected] = useState("hilux");
+  const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
+  // Tres peticiones para todo el panel, no una por vehículo: las tres rutas ya vienen
+  // filtradas por el taller de la sesión. Una cartera de cien autos sigue siendo tres
+  // llamadas.
+  const flota = useApi<Vehicle[]>("/taller/vehiculos");
+  const pendientes = useApi<UpcomingService[]>("/taller/recordatorios");
+  const trabajos = useApi<MaintenanceRecord[]>("/taller/trabajos");
+
+  if (flota.cargando || pendientes.cargando || trabajos.cargando) return <Cargando que="la cartera del taller" />;
+  if (flota.error) return <ErrorApi mensaje={flota.error} onReintentar={flota.recargar} />;
+  if (pendientes.error) return <ErrorApi mensaje={pendientes.error} onReintentar={pendientes.recargar} />;
+  if (trabajos.error) return <ErrorApi mensaje={trabajos.error} onReintentar={trabajos.recargar} />;
+
+  const vehiculos = flota.datos ?? [];
+  const recordatorios = pendientes.datos ?? [];
+  const historial = trabajos.datos ?? [];
+
+  // Los cuatro números salen de estas mismas tres listas: no hay ningún contador guardado
+  // que pueda quedar desincronizado de los datos que se ven abajo.
+  const vencidos = recordatorios.filter((u) => u.status === "vencido").length;
+  const proximos = recordatorios.filter((u) => u.status === "pronto").length;
+  const conPendiente = new Set(recordatorios.map((u) => u.vehicleId)).size;
+  const mes = mesActual();
+  const trabajosDelMes = historial.filter((r) => r.date.startsWith(mes)).length;
+
   const q = query.trim().toLowerCase();
-  const rows = vehicles
+  const rows = vehiculos
     .filter((v) => !q || `${v.name} ${v.plate} ${v.ownerName}`.toLowerCase().includes(q))
-    .map((v) => ({ vehicle: v, next: nextUpcoming(v.id, records), status: vehicleStatus(v.id, records) }))
+    // El servidor manda los recordatorios ordenados por urgencia, así que el primero que
+    // coincide con este vehículo ya es el peor: no hay que recalcular nada.
+    .map((v) => ({ vehicle: v, next: recordatorios.find((u) => u.vehicleId === v.id) }))
     .sort((a, b) => (b.next?.progress ?? 0) - (a.next?.progress ?? 0));
 
   // Si el filtro deja fuera al vehículo seleccionado, la ficha pasa a la primera
   // fila visible en vez de quedar mostrando algo que ya no está en la tabla.
-  const enFicha = rows.some((r) => r.vehicle.id === selected) ? selected : rows[0]?.vehicle.id ?? "";
+  const enFicha = rows.some((r) => r.vehicle.id === selected) ? selected : rows[0]?.vehicle.id ?? null;
+  const vehiculoEnFicha = vehiculos.find((v) => v.id === enFicha);
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, marginBottom: 24 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
         <div>
           <div className="cf-display" style={{ fontWeight: 600, fontSize: 26, letterSpacing: "-.3px" }}>
             Vehículos en seguimiento
           </div>
           <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginTop: 4 }}>
-            {workshop.totals.activos} activos · {workshop.totals.pendientes} con mantención pendiente
+            {vehiculos.length} activos · {conPendiente} con mantención pendiente
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
@@ -53,14 +86,14 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
-        <Kpi label="Pendientes hoy" value={workshop.kpis.pendientesHoy} color="var(--cf-warn)" />
-        <Kpi label="Vencidos" value={workshop.kpis.vencidos} color="var(--cf-danger)" />
-        <Kpi label="Trabajos este mes" value={workshop.kpis.trabajosMes} color="var(--cf-ok)" />
+      <div style={{ display: "flex", gap: 14, marginBottom: 24, flexWrap: "wrap" }}>
+        <Kpi label="Por vencer" value={proximos} color="var(--cf-warn)" />
+        <Kpi label="Vencidos" value={vencidos} color="var(--cf-danger)" />
+        <Kpi label="Trabajos este mes" value={trabajosDelMes} color="var(--cf-ok)" />
       </div>
 
-      <div style={{ display: "flex", gap: 22, alignItems: "flex-start" }}>
-        <div style={{ flex: 1.4, minWidth: 0 }}>
+      <div style={{ display: "flex", gap: 22, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div style={{ flex: "1.4 1 420px", minWidth: 0 }}>
           <div
             className="cf-mono"
             style={{
@@ -79,7 +112,7 @@ export function Dashboard() {
             <span>Estado</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {rows.map(({ vehicle, next, status }) => {
+            {rows.map(({ vehicle, next }) => {
               const active = enFicha === vehicle.id;
               return (
                 <div
@@ -104,22 +137,38 @@ export function Dashboard() {
                   </div>
                   <span style={{ fontSize: 12.5 }}>{vehicle.ownerName}</span>
                   <span className="cf-mono" style={{ fontSize: 11.5 }}>
-                    {next ? `${next.part} · ${next.remainingLabel}` : "sin registros"}
+                    {next ? `${next.part} · ${next.remainingLabel}` : "sin pendientes"}
                   </span>
-                  <StatusBadge status={status} />
+                  <StatusBadge status={next?.status ?? "ok"} />
                 </div>
               );
             })}
             {rows.length === 0 && (
-              <div style={{ padding: "28px 14px", textAlign: "center", fontSize: 13, color: "var(--cf-dim)" }}>
-                Ningún vehículo coincide con “{query}”.
+              <div style={{ padding: "28px 14px", textAlign: "center", fontSize: 13, color: "var(--cf-dim)", lineHeight: 1.6 }}>
+                {vehiculos.length === 0 ? (
+                  <>
+                    Todavía no hay vehículos en seguimiento.
+                    <br />
+                    Cargá un cliente en <strong style={{ color: "var(--cf-accent)" }}>Clientes</strong> y después su
+                    vehículo.
+                  </>
+                ) : (
+                  <>Ningún vehículo coincide con “{query}”.</>
+                )}
               </div>
             )}
           </div>
         </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <AuditPanel vehicleId={enFicha} />
+        <div style={{ flex: "1 1 300px", minWidth: 0 }}>
+          {/* La ficha no pide nada más: el último trabajo y el próximo servicio ya están
+              en las listas de arriba, así que seleccionar una fila no dispara una
+              petición nueva. */}
+          <AuditPanel
+            vehicle={vehiculoEnFicha}
+            ultimo={historial.find((r) => r.vehicleId === enFicha)}
+            proximo={recordatorios.find((u) => u.vehicleId === enFicha)}
+          />
         </div>
       </div>
     </>
@@ -130,7 +179,7 @@ function Kpi({ label, value, color }: { label: string; value: number; color: str
   return (
     <div
       style={{
-        flex: 1,
+        flex: "1 1 160px",
         position: "relative",
         border: "1px solid var(--cf-border)",
         borderRadius: 14,

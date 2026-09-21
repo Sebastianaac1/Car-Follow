@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
 import { AuthorPill } from "@cf/ui";
-import { nextUpcoming, vehicleById } from "@cf/mock-data";
-import { useData } from "../store";
-import { formatDate, km } from "../format";
+import type { MaintenanceRecord, UpcomingService, Vehicle } from "@cf/types";
+import { formatDate, formatTimestamp, km } from "../format";
 
+/**
+ * La ficha lateral del dashboard. Recibe lo que va a mostrar en vez de pedirlo: el
+ * dashboard ya trae la flota, el historial y los recordatorios de toda la cartera, así
+ * que cambiar de fila seleccionada no dispara ninguna petición nueva.
+ */
 const microLabel: React.CSSProperties = {
   fontSize: 10.5,
   letterSpacing: 0.5,
@@ -13,12 +17,15 @@ const microLabel: React.CSSProperties = {
   fontFamily: "'IBM Plex Mono', monospace",
 };
 
-export function AuditPanel({ vehicleId }: { vehicleId: string }) {
-  const vehicle = vehicleById(vehicleId);
-  const { records, recordsByVehicle } = useData();
-  const record = recordsByVehicle(vehicleId)[0];
-  const upcoming = nextUpcoming(vehicleId, records);
-
+export function AuditPanel({
+  vehicle,
+  ultimo,
+  proximo,
+}: {
+  vehicle?: Vehicle;
+  ultimo?: MaintenanceRecord;
+  proximo?: UpcomingService;
+}) {
   return (
     <div style={{ border: "1px solid var(--cf-border)", borderRadius: 16, background: "var(--cf-surface)", padding: 18 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
@@ -30,33 +37,28 @@ export function AuditPanel({ vehicleId }: { vehicleId: string }) {
         )}
       </div>
       <div className="cf-display" style={{ fontWeight: 600, fontSize: 17, marginBottom: 14 }}>
-        {record?.title ?? "Sin registros"}
+        {ultimo?.title ?? "Sin registros"}
       </div>
 
-      {record ? (
+      {ultimo ? (
         <>
           <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 18, fontSize: 12.5 }}>
-            <Row label="Fecha" value={formatDate(record.date)} mono />
-            <Row label="Kilometraje" value={`${km(record.odometer)} km`} mono />
-            <Row
-              label="Próximo"
-              value={upcoming ? `${upcoming.part} · ${upcoming.remainingLabel}` : "—"}
-              mono
-              accent
-            />
-            <Row label="Piezas" value={record.parts.join(", ")} />
+            <Row label="Fecha" value={formatDate(ultimo.date)} mono />
+            <Row label="Kilometraje" value={`${km(ultimo.odometer)} km`} mono />
+            <Row label="Próximo" value={proximo ? `${proximo.part} · ${proximo.remainingLabel}` : "sin pendientes"} mono accent />
+            <Row label="Piezas" value={ultimo.parts.join(", ") || "—"} />
           </div>
 
           <div style={microLabel}>Historial de modificaciones</div>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {record.revisions.map((rev, i) => (
+            {ultimo.revisions.map((rev, i) => (
               <div
                 key={rev.id}
                 style={{
                   borderLeft: "2px solid var(--cf-border)",
                   paddingLeft: 14,
                   marginLeft: 4,
-                  paddingBottom: i === record.revisions.length - 1 ? 0 : 12,
+                  paddingBottom: i === ultimo.revisions.length - 1 ? 0 : 12,
                   position: "relative",
                 }}
               >
@@ -73,7 +75,7 @@ export function AuditPanel({ vehicleId }: { vehicleId: string }) {
                 />
                 <div style={{ fontSize: 12 }}>{rev.description}</div>
                 <div className="cf-mono" style={{ fontSize: 10, color: "var(--cf-dim)", marginTop: 2 }}>
-                  {rev.timestamp}
+                  {formatTimestamp(rev.timestamp)}
                 </div>
                 <div style={{ marginTop: 5 }}>
                   <AuthorPill role={rev.author.role} name={rev.author.name} />
@@ -84,7 +86,7 @@ export function AuditPanel({ vehicleId }: { vehicleId: string }) {
         </>
       ) : (
         <div style={{ fontSize: 12.5, color: "var(--cf-dim)" }}>
-          Este vehículo aún no tiene trabajos registrados.
+          {vehicle ? "Este vehículo aún no tiene trabajos registrados." : "Elegí un vehículo de la tabla."}
         </div>
       )}
     </div>

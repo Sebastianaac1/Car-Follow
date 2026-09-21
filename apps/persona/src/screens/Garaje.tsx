@@ -109,32 +109,45 @@ export function Garaje() {
 
   return (
     <div style={{ padding: "8px 20px 16px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
         <div>
           <div style={{ fontSize: 12, color: "var(--cf-dim)" }}>Hola, {sesion?.nombre.split(" ")[0]}</div>
           <div className="cf-display" style={{ fontWeight: 600, fontSize: 22 }}>
             Mis vehículos
           </div>
         </div>
-        <button
-          className="cf-btn"
-          onClick={() => navigate("/registrar")}
-          aria-label="Registrar mantención"
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 12,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 22,
-          }}
-        >
-          +
-        </button>
+        <div style={{ display: "flex", gap: 9, flexShrink: 0 }}>
+          {mine.length > 0 && (
+            <button
+              className="cf-tap"
+              onClick={() => navigate("/registrar")}
+              style={{
+                padding: "9px 14px",
+                borderRadius: 11,
+                fontSize: 12.5,
+                fontFamily: "inherit",
+                fontWeight: 500,
+                border: "1px solid var(--cf-border)",
+                background: "var(--cf-surface)",
+                color: "var(--cf-text)",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              Registrar mantención
+            </button>
+          )}
+          <button
+            className="cf-btn"
+            onClick={() => navigate("/nuevo-vehiculo")}
+            style={{ padding: "9px 14px", borderRadius: 11, fontSize: 12.5, whiteSpace: "nowrap" }}
+          >
+            + Vehículo
+          </button>
+        </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
         {mine.map((v) => (
           <VehicleCard
             key={v.id}
@@ -146,6 +159,7 @@ export function Garaje() {
         {mine.length === 0 && (
           <div
             style={{
+              gridColumn: "1 / -1",
               border: "1px dashed var(--cf-border)",
               borderRadius: 18,
               padding: "28px 20px",
@@ -157,7 +171,7 @@ export function Garaje() {
           >
             Tu garaje está vacío.
             <br />
-            Agrega tu primer vehículo con el botón <strong style={{ color: "var(--cf-accent)" }}>+</strong>.
+            Agrega tu primer vehículo con <strong style={{ color: "var(--cf-accent)" }}>+ Vehículo</strong>.
           </div>
         )}
       </div>

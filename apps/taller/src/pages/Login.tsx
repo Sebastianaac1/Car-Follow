@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Logo, ThemeToggle } from "@cf/ui";
-import { accountByEmail } from "@cf/mock-data";
+import type { Account } from "@cf/types";
+import { api } from "../api";
 import { useSesion } from "../sesion";
 
-/** La app de la persona corre en su propio origen. */
-const URL_PERSONA = "http://localhost:5173";
+/** La app de la persona corre en su propio dominio. */
+const URL_PERSONA = import.meta.env.VITE_URL_PERSONA ?? "http://localhost:5173";
 
 /* Duplicado a propósito con Registro.tsx: son dos pantallas parecidas, no la
    misma. Regla de tres — se extrae al tercer uso, no antes. */
@@ -27,25 +28,35 @@ export function Login() {
   const location = useLocation();
   const destino = (location.state as { desde?: string } | null)?.desde ?? "/";
 
-  const [email, setEmail] = useState("contacto@tallercfnorte.cl");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
-  const enviar = (e: FormEvent) => {
+  const enviar = async (e: FormEvent) => {
     e.preventDefault();
+    setEnviando(true);
+    setError(null);
 
-    // El rol no se elige: se busca la cuenta y se descubre qué es.
-    const cuenta = accountByEmail(email);
-    if (!cuenta) {
-      setError("No hay ninguna cuenta con ese correo.");
-      return;
+    try {
+      // El rol sigue sin elegirse: se manda correo y clave, y el rol viene en la
+      // respuesta. El servidor responde lo mismo si el correo no existe o si la
+      // contraseña está mal, así que este mensaje no delata qué correos hay registrados.
+      const { token, cuenta } = await api<{ token: string; cuenta: Account }>("/auth/login", {
+        metodo: "POST",
+        cuerpo: { email, password },
+      });
+
+      if (cuenta.role !== "taller") {
+        window.location.href = URL_PERSONA;
+        return;
+      }
+      entrar({ token, email: cuenta.email, nombre: cuenta.name });
+      navigate(destino, { replace: true });
+    } catch (e) {
+      setError((e as Error).message);
+      setEnviando(false);
     }
-    if (cuenta.role !== "taller") {
-      window.location.href = URL_PERSONA;
-      return;
-    }
-    entrar({ email: cuenta.email, nombre: cuenta.name });
-    navigate(destino, { replace: true });
   };
 
   return (
@@ -98,7 +109,7 @@ export function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
-          placeholder="cualquier valor sirve"
+          required
           style={{ ...campo, marginBottom: error ? 12 : 18 }}
         />
 
@@ -108,8 +119,13 @@ export function Login() {
           </div>
         )}
 
-        <button className="cf-btn" type="submit" style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14 }}>
-          Entrar
+        <button
+          className="cf-btn"
+          type="submit"
+          disabled={enviando}
+          style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14, opacity: enviando ? 0.6 : 1 }}
+        >
+          {enviando ? "Entrando…" : "Entrar"}
         </button>
 
         <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginTop: 16 }}>
@@ -117,10 +133,8 @@ export function Login() {
         </div>
 
         <p style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--cf-dim)", margin: "14px 0 0" }}>
-          <strong style={{ color: "var(--cf-text)" }}>Demo sin backend.</strong> El tipo de cuenta se resuelve buscando
-          el correo en un directorio local; si la cuenta es de persona te mandamos a la app móvil. La contraseña no se
-          valida ni se guarda en ninguna parte. La autenticación real (JWT, hash Argon2id en el servidor) está diseñada
-          en el README y todavía no existe en código.
+          El tipo de cuenta no se elige: sale de la cuenta al entrar, y si es de persona te mandamos a su app. La
+          contraseña viaja al servidor, que la compara contra un hash Argon2id — nunca se guarda en el navegador.
         </p>
       </form>
     </div>

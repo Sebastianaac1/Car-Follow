@@ -1,17 +1,28 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Logo } from "@cf/ui";
+import { Logo, ThemeToggle } from "@cf/ui";
 import type { Account } from "@cf/types";
 import { api } from "../api";
 import { useSesion } from "../sesion";
 
-/** El panel del taller corre en su propio origen. */
-const URL_TALLER = "http://localhost:5174/registro";
+/** El panel del taller corre en su propio dominio. */
+const URL_TALLER = import.meta.env.VITE_URL_TALLER ?? "http://localhost:5174";
 
 /* Duplicado a propósito con Login.tsx: son dos pantallas parecidas, no la
    misma. Regla de tres — se extrae al tercer uso, no antes. */
 const etiqueta: React.CSSProperties = { fontSize: 11, color: "var(--cf-dim)", marginBottom: 5, fontWeight: 500 };
-const campo: React.CSSProperties = { width: "100%", borderRadius: 10, padding: "10px 12px", fontSize: 13 };
+const campo: React.CSSProperties = { width: "100%", borderRadius: 10, padding: "11px 13px", fontSize: 13.5 };
+/* Antes esta pantalla ocupaba el alto del marco de teléfono; ahora es una página web y
+   se centra sola en la ventana. */
+const marco: React.CSSProperties = {
+  minHeight: "100vh",
+  background: "radial-gradient(760px 420px at 50% -10%, var(--cf-accent-soft), transparent 70%), var(--cf-bg)",
+  color: "var(--cf-text)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: 24,
+};
 
 type Tipo = "persona" | "taller";
 
@@ -32,7 +43,7 @@ export function Registro() {
     // Las cuentas de taller se crean desde el panel web: es la misma API, pero el panel
     // pide los datos del negocio y no los de una persona.
     if (tipo === "taller") {
-      window.location.href = URL_TALLER;
+      window.location.href = `${URL_TALLER}/registro`;
       return;
     }
 
@@ -56,7 +67,21 @@ export function Registro() {
   };
 
   return (
-    <form onSubmit={enviar} style={{ flex: 1, display: "flex", flexDirection: "column", padding: "24px 22px 22px" }}>
+    <div style={marco}>
+      <div style={{ position: "absolute", top: 24, right: 24 }}>
+        <ThemeToggle />
+      </div>
+      <form
+        onSubmit={enviar}
+        style={{
+          width: "100%",
+          maxWidth: 380,
+          border: "1px solid var(--cf-border)",
+          borderRadius: 18,
+          background: "var(--cf-surface)",
+          padding: 28,
+        }}
+      >
       <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 22 }}>
         <Logo size={38} radius={11} font={15} />
         <div>
@@ -73,14 +98,14 @@ export function Registro() {
       <div style={{ display: "flex", gap: 7, marginBottom: 16 }}>
         <Opcion
           label="Persona"
-          detalle="App móvil"
+          detalle="Dueño de vehículo"
           activo={tipo === "persona"}
           onClick={() => {
             setTipo("persona");
             setError(null);
           }}
         />
-        <Opcion label="Taller" detalle="Panel web" activo={tipo === "taller"} onClick={() => setTipo("taller")} />
+        <Opcion label="Taller" detalle="Panel del negocio" activo={tipo === "taller"} onClick={() => setTipo("taller")} />
       </div>
 
       {tipo === "taller" ? (
@@ -163,7 +188,8 @@ export function Registro() {
         La cuenta se crea en el servidor. La contraseña se guarda como un hash Argon2id y no vuelve nunca: ni en esta
         respuesta ni en ninguna otra.
       </p>
-    </form>
+      </form>
+    </div>
   );
 }
 

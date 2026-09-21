@@ -17,9 +17,6 @@ importers:
 
   apps/persona:
     dependencies:
-      '@cf/mock-data':
-        specifier: workspace:*
-        version: link:../../packages/mock-data
       '@cf/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -54,9 +51,6 @@ importers:
 
   apps/taller:
     dependencies:
-      '@cf/mock-data':
-        specifier: workspace:*
-        version: link:../../packages/mock-data
       '@cf/types':
         specifier: workspace:*
         version: link:../../packages/types

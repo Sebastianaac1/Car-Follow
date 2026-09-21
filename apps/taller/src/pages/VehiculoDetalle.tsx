@@ -1,10 +1,19 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { AuthorPill, ProgressBar, StatusBadge } from "@cf/ui";
-import { clientById, upcomingFor, vehicleById, vehicleStatus } from "@cf/mock-data";
-import { useData } from "../store";
-import { formatDate, km } from "../format";
+import type { Client, MaintenanceRecord, UpcomingService, Vehicle } from "@cf/types";
+import { useApi } from "../api";
+import { Cargando, ErrorApi } from "../Estado";
+import { formatDate, formatTimestamp, km } from "../format";
 
-const kindLabel: Record<string, string> = { auto: "Auto", moto: "Moto", camion: "Camión", maquinaria: "Maquinaria" };
+// Pasa las 200 líneas a propósito: es una ficha, o sea una sola cosa mostrada entera.
+// Lo que la hace larga son los estilos inline de cada bloque, no ramas de lógica.
+
+const kindLabel: Record<Vehicle["kind"], string> = {
+  auto: "Auto",
+  moto: "Moto",
+  camion: "Camión",
+  maquinaria: "Maquinaria",
+};
 
 const microLabel: React.CSSProperties = {
   fontSize: 10.5,
@@ -25,27 +34,42 @@ const card: React.CSSProperties = {
 export function VehiculoDetalle() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { records, recordsByVehicle } = useData();
 
-  const vehicle = vehicleById(id);
-  if (!vehicle) {
+  // Un vehículo que no es de esta cartera responde 404 igual que uno que no existe, así
+  // que acá no hay forma de distinguirlos — que es exactamente la idea.
+  const ficha = useApi<Vehicle>(`/taller/vehiculos/${id}`);
+  const proximos = useApi<UpcomingService[]>(`/taller/vehiculos/${id}/proximos`);
+  const historial = useApi<MaintenanceRecord[]>(`/taller/vehiculos/${id}/mantenciones`);
+  const cartera = useApi<Client[]>("/taller/clientes");
+
+  if (ficha.cargando || proximos.cargando || historial.cargando || cartera.cargando)
+    return <Cargando que="el vehículo" />;
+
+  if (ficha.error) {
     return (
       <>
         <div className="cf-display" style={{ fontWeight: 600, fontSize: 22, marginBottom: 6 }}>
           Vehículo no encontrado
         </div>
-        <div style={{ fontSize: 13, color: "var(--cf-dim)", marginBottom: 18 }}>
-          No hay ningún vehículo con el id <span className="cf-mono">{id}</span>.
+        <div style={{ fontSize: 13, color: "var(--cf-dim)", marginBottom: 18, lineHeight: 1.5 }}>
+          {ficha.error}
         </div>
         <Link to="/vehiculos">← Volver a Vehículos</Link>
       </>
     );
   }
+  if (proximos.error) return <ErrorApi mensaje={proximos.error} onReintentar={proximos.recargar} />;
+  if (historial.error) return <ErrorApi mensaje={historial.error} onReintentar={historial.recargar} />;
+  if (cartera.error) return <ErrorApi mensaje={cartera.error} onReintentar={cartera.recargar} />;
 
-  const client = clientById(vehicle.ownerId);
-  const upcoming = upcomingFor(vehicle.id, records);
-  const history = recordsByVehicle(vehicle.id).slice().sort((a, b) => b.date.localeCompare(a.date));
-  const phoneDigits = client?.phone.replace(/\D/g, "") ?? "";
+  const vehicle = ficha.datos!;
+  const upcoming = proximos.datos ?? [];
+  const history = historial.datos ?? [];
+  const client = (cartera.datos ?? []).find((c) => c.id === vehicle.ownerId);
+  const telefono = client?.phone.replace(/\D/g, "") ?? "";
+
+  // La lista viene ordenada por urgencia: el estado del vehículo es el del peor pendiente.
+  const estado = upcoming.find((u) => u.status !== "ok")?.status ?? "ok";
 
   return (
     <>
@@ -53,13 +77,22 @@ export function VehiculoDetalle() {
         ← Vehículos
       </Link>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 20, margin: "10px 0 22px" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-end",
+          gap: 20,
+          margin: "10px 0 22px",
+          flexWrap: "wrap",
+        }}
+      >
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span className="cf-display" style={{ fontWeight: 600, fontSize: 26, letterSpacing: "-.3px" }}>
               {vehicle.name}
             </span>
-            <StatusBadge status={vehicleStatus(vehicle.id, records)} />
+            <StatusBadge status={estado} />
           </div>
           <div className="cf-mono" style={{ fontSize: 12, color: "var(--cf-dim)", marginTop: 5 }}>
             {vehicle.plate} · {kindLabel[vehicle.kind]} · {km(vehicle.odometer)} km · {vehicle.ownerName}
@@ -67,18 +100,12 @@ export function VehiculoDetalle() {
         </div>
 
         <div style={{ display: "flex", gap: 9, flexShrink: 0 }}>
-          {client && (
+          {telefono && (
             <>
-              <a className="cf-tap" href={`tel:${phoneDigits}`} style={accion}>
+              <a className="cf-tap" href={`tel:${telefono}`} style={accion}>
                 Llamar
               </a>
-              <a
-                className="cf-tap"
-                href={`https://wa.me/${phoneDigits}`}
-                target="_blank"
-                rel="noreferrer"
-                style={accion}
-              >
+              <a className="cf-tap" href={`https://wa.me/${telefono}`} target="_blank" rel="noreferrer" style={accion}>
                 WhatsApp
               </a>
             </>
@@ -98,16 +125,16 @@ export function VehiculoDetalle() {
           <div style={card}>
             <div style={microLabel}>Próximas mantenciones</div>
             {upcoming.length === 0 && (
-              <div style={{ fontSize: 12.5, color: "var(--cf-dim)" }}>
+              <div style={{ fontSize: 12.5, color: "var(--cf-dim)", lineHeight: 1.5 }}>
                 Sin trabajos registrados: no hay desde dónde contar ningún intervalo.
               </div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {upcoming.map((u) => (
                 <div key={u.id}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 7 }}>
                     <span style={{ fontWeight: 600, fontSize: 13.5 }}>{u.part}</span>
-                    <span className="cf-mono" style={{ fontSize: 11.5, color: colorEstado(u.status) }}>
+                    <span className="cf-mono" style={{ fontSize: 11.5, color: colorEstado(u.status), whiteSpace: "nowrap" }}>
                       {u.remainingLabel}
                     </span>
                   </div>
@@ -128,8 +155,8 @@ export function VehiculoDetalle() {
               <div style={microLabel}>Cliente</div>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{client.name}</div>
               <div className="cf-mono" style={{ fontSize: 12, color: "var(--cf-dim)", marginTop: 4 }}>
-                {client.phone} · {client.vehicleIds.length} vehículo
-                {client.vehicleIds.length === 1 ? "" : "s"} en seguimiento
+                {client.phone || "sin teléfono"} · {client.vehicleIds.length}{" "}
+                {client.vehicleIds.length === 1 ? "vehículo" : "vehículos"} en seguimiento
               </div>
             </div>
           )}
@@ -137,7 +164,9 @@ export function VehiculoDetalle() {
 
         <div style={{ flex: "1 1 420px", minWidth: 0 }}>
           <div style={card}>
-            <div style={microLabel}>Historial · {history.length} trabajos</div>
+            <div style={microLabel}>
+              Historial · {history.length} {history.length === 1 ? "trabajo" : "trabajos"}
+            </div>
             {history.length === 0 && (
               <div style={{ fontSize: 12.5, color: "var(--cf-dim)" }}>Este vehículo aún no tiene trabajos registrados.</div>
             )}
@@ -172,16 +201,17 @@ export function VehiculoDetalle() {
                     </span>
                   </div>
                   <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)", margin: "3px 0 7px" }}>
-                    {km(r.odometer)} km · {r.place === "taller" ? "en taller" : "particular"} · {r.parts.join(", ")}
+                    {km(r.odometer)} km · {r.place === "taller" ? "en taller" : "particular"}
+                    {r.parts.length > 0 && ` · ${r.parts.join(", ")}`}
                   </div>
                   <AuthorPill role={r.author.role} name={r.author.name} />
 
                   {/* Audit trail: cada modificación queda firmada, nada se sobrescribe. */}
                   <div style={{ marginTop: 9, display: "flex", flexDirection: "column", gap: 6 }}>
                     {r.revisions.map((rev) => (
-                      <div key={rev.id} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 11.5 }}>
+                      <div key={rev.id} style={{ display: "flex", gap: 8, alignItems: "baseline", fontSize: 11.5, flexWrap: "wrap" }}>
                         <span className="cf-mono" style={{ fontSize: 10, color: "var(--cf-dim)", whiteSpace: "nowrap" }}>
-                          {rev.timestamp}
+                          {formatTimestamp(rev.timestamp)}
                         </span>
                         <span style={{ color: "var(--cf-dim)" }}>{rev.description}</span>
                         <span className="cf-mono" style={{ fontSize: 10, color: colorAutor(rev.author.role) }}>

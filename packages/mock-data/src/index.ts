@@ -272,10 +272,10 @@ export const maintenanceRecords: MaintenanceRecord[] = [
 ];
 
 export const clients: Client[] = [
-  { id: "martin", name: "Martín R.", phone: "+56 9 6521 4408", vehicleIds: ["hilux", "cb500"], plan: "particular" },
-  { id: "lucia", name: "Lucía M.", phone: "+56 9 7310 9925", vehicleIds: ["ranger"], plan: "particular" },
-  { id: "transp-sur", name: "Transp. Sur", phone: "+56 2 2845 1170", vehicleIds: ["scania"], plan: "particular" },
-  { id: "constr-andes", name: "Constr. Andes", phone: "+56 2 2907 3364", vehicleIds: ["cat320"], plan: "particular" },
+  { id: "martin", name: "Martín R.", phone: "+56 9 6521 4408", vehicleIds: ["hilux", "cb500"] },
+  { id: "lucia", name: "Lucía M.", phone: "+56 9 7310 9925", vehicleIds: ["ranger"] },
+  { id: "transp-sur", name: "Transp. Sur", phone: "+56 2 2845 1170", vehicleIds: ["scania"] },
+  { id: "constr-andes", name: "Constr. Andes", phone: "+56 2 2907 3364", vehicleIds: ["cat320"] },
 ];
 
 export const workshop = {

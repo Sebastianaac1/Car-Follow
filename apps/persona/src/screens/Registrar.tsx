@@ -94,8 +94,8 @@ export function Registrar() {
   };
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-      <div style={{ padding: "14px 20px", flex: 1 }}>
+    <div style={{ maxWidth: 460 }}>
+      <div style={{ padding: "14px 20px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
           <span onClick={() => navigate("/")} style={{ fontSize: 18, cursor: "pointer" }}>
             ✕
@@ -190,7 +190,7 @@ export function Registrar() {
         </div>
       </div>
 
-      <div style={{ padding: "14px 20px", borderTop: "1px solid var(--cf-border)" }}>
+      <div style={{ padding: "0 20px 20px" }}>
         {errorGuardar && (
           <div role="alert" style={{ fontSize: 12, color: "var(--cf-danger)", marginBottom: 10, lineHeight: 1.45 }}>
             {errorGuardar}

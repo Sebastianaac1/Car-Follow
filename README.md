@@ -36,10 +36,11 @@ las dos entradas con su firma y su hora.
 | **Criterio, no abstracción** | El repo sigue reglas de decisión explícitas: regla de tres, prohibido el parámetro-bandera, sin indirección de un solo uso. `formatDate` está duplicada a propósito porque son dos formatos distintos, no una función con un flag. |
 | **Arquitectura pensada** | El plan de backend, el modelo de autenticación y las decisiones de seguridad están razonados abajo, incluyendo por qué **no** se usa Next.js acá. |
 
-> **Estado:** prototipo navegable con datos en memoria y sin tests. El backend ya existe en
-> su propio repo ([BF-Car-Follow](https://github.com/Sebastianaac1/BF-Car-Follow)) con
-> autenticación y vehículos funcionando sobre PostgreSQL, pero **este repo todavía no lo
-> consume**: las pantallas leen de `@cf/mock-data`. El plan que se siguió está más abajo.
+> **Estado:** las dos apps consumen la API del repo
+> ([BF-Car-Follow](https://github.com/Sebastianaac1/BF-Car-Follow)) sobre PostgreSQL. No
+> queda nada en memoria: los dos `store.tsx` están borrados y cada pantalla pide lo suyo.
+> **Sigue sin haber tests** — todo se verificó con scripts contra la API y el navegador a
+> mano. Los dos repos están listos para desplegar (Render + Vercel).
 
 ### Cómo se derivan los recordatorios
 
@@ -120,10 +121,14 @@ Tema claro incluido, con la misma paleta portada a valores accesibles:
 
 ### App de la persona
 
-Garaje, detalle del vehículo con su historial, registro de mantenciones, reglas por
-pieza y alertas derivadas de las mismas reglas que usa el taller. En pantalla grande se
-muestra dentro de un dispositivo; en móvil el marco desaparece y la app ocupa toda la
-ventana.
+Garaje, detalle del vehículo con su historial, registro de mantenciones y de vehículos,
+reglas por pieza y alertas derivadas de las mismas reglas que usa el taller.
+
+Es una **app web**: ocupa la ventana, con la navegación arriba y el contenido en un
+contenedor centrado. Por debajo de 760px esa navegación baja a una tab bar fija — la misma
+lista de secciones pintada de dos formas, y el CSS decide cuál se ve. Antes esto era un
+marco de teléfono dibujado en el medio de la pantalla: servía para presentar el prototipo,
+no para usarlo.
 
 ## Correr el proyecto
 
@@ -136,10 +141,15 @@ pnpm dev          # ambas apps a la vez
 
 | App | URL | Script individual |
 |---|---|---|
-| Persona (móvil) | http://localhost:5173 | `pnpm dev:persona` |
+| Persona | http://localhost:5173 | `pnpm dev:persona` |
 | Taller (web) | http://localhost:5174 | `pnpm dev:taller` |
 
 Otros scripts: `pnpm build`, `pnpm typecheck`.
+
+Las dos apps hablan con la API en `http://localhost:3000`, así que para verlas con datos
+hay que tener el backend corriendo (`pnpm dev` en su repo). Las URLs no están escritas en
+el código: salen de `VITE_API_URL`, `VITE_URL_TALLER` y `VITE_URL_PERSONA`, y los valores
+por defecto son los puertos de desarrollo — ver `.env.example`.
 
 > `pnpm lint` hoy ejecuta `tsc --noEmit`, igual que `typecheck`. No hay ESLint configurado
 > todavía y el README no va a decir lo contrario.
@@ -167,20 +177,20 @@ si lo usa una sola, se queda en esa app.
 |---|---|
 | `types/` | **El contrato.** `Vehicle`, `MaintenanceRecord`, `PartRule`, `Revision`, `Account`… Es el único lugar de los DTOs, y el backend devuelve exactamente estas formas. Cambiar un tipo acá rompe la compilación de las dos apps a la vez, que es justo lo que se quiere. |
 | `ui/` | El design system. `theme.ts` tiene la paleta en tokens CSS, `ThemeProvider.tsx` persiste claro/oscuro, `components.tsx` trae `Logo`, `StatusBadge`, `ProgressBar`, `AuthorPill` y `Card`, y `styles.css` los estilos base. Solo entra lo que usan **ambas** apps. |
-| `mock-data/` | **Acá vive la lógica de negocio del prototipo.** Además de los datos de ejemplo, calcula los recordatorios: `upcomingFor()`, `nextUpcoming()` y `vehicleStatus()`. También finge las cuentas con `accountByEmail()` y `registerAccount()`. Es lo que se muda al backend cuando exista. |
+| `mock-data/` | **Ya no lo importa ninguna app.** Fue donde vivió la derivación de recordatorios hasta que se mudó al backend; queda como la implementación de referencia contra la que se verificó esa mudanza, campo por campo. Borrarlo es una decisión pendiente, no un trámite. |
 
-### `apps/persona/src/` — la app móvil
+### `apps/persona/src/` — la app de la persona
 
 | | Qué hace |
 |---|---|
 | `main.tsx` | El arranque: monta React con el `ThemeProvider` y el router. |
-| `App.tsx` | **El mapa de rutas y la guarda.** Sin sesión solo existen `/login` y `/registro`; el resto redirige recordando a dónde iba. Con sesión se monta el `DataProvider` y las ocho pantallas. |
-| `sesion.tsx` | Quién dice ser el usuario. Guarda en `sessionStorage` bajo `cf-sesion-persona`. Nadie valida nada todavía. |
-| `store.tsx` | El estado compartido: `records`, `rules` y `addRecord()`. Se reinicia al recargar. |
+| `App.tsx` | **El mapa de rutas y la guarda.** Sin sesión solo existen `/login` y `/registro`; el resto redirige recordando a dónde iba. |
+| `sesion.tsx` | Guarda el token en `sessionStorage` bajo `cf-sesion-persona`. La app nunca lo abre: solo lo manda en el header. |
+| `api.ts` | **El puente con el backend.** `api()` pone el token y traduce los errores de Nest; `useApi()` agrega `cargando`, `error` y `recargar`, y descarta la respuesta vieja si la pantalla cambió antes de que llegue. |
+| `Estado.tsx` | `<Cargando>` y `<ErrorApi>` con botón de reintentar. Los dos estados que solo existen cuando los datos vienen de la red. |
+| `Layout.tsx` + `layout.css` | El marco de la app: barra arriba, tab bar abajo en pantallas angostas. |
 | `format.ts` | `km()` y `formatDate()`. Da `04 mar 2025` — distinto del taller **a propósito**. |
-| `PhoneFrame.tsx` | El marco de teléfono y la tab bar de cuatro pestañas que envuelve cada pantalla. |
-| `Presentacion.tsx` | El bloque que explica el prototipo alrededor del teléfono. |
-| `screens/` | Una pantalla por archivo: `Garaje`, `VehicleDetail` + `DetailBody`, `Registrar`, `Alertas`, `Historial`, `Perfil`, `Reglas`, `Login` y `Registro`. |
+| `screens/` | Una pantalla por archivo: `Garaje`, `VehicleDetail` + `DetailBody`, `NuevoVehiculo`, `Registrar`, `Alertas`, `Historial`, `Perfil`, `Reglas`, `Login` y `Registro`. |
 
 ### `apps/taller/src/` — el panel web
 
@@ -189,10 +199,9 @@ Misma estructura, otra forma. Los archivos que se repiten de nombre **no son el 
 | | Qué hace |
 |---|---|
 | `App.tsx` | Rutas y guarda, igual que persona. Con sesión, todo se monta dentro del `Layout`. |
-| `Layout.tsx` | La barra lateral: navegación, nombre y plan del taller, toggle de tema y cerrar sesión. Es el equivalente del `PhoneFrame`. |
-| `sesion.tsx` | Igual que en persona pero con la clave `cf-sesion-taller`: son dos sesiones separadas en dos orígenes distintos. |
-| `store.tsx` | Estado del panel. Su `addJob()` firma siempre como el taller, nunca como la persona. |
-| `format.ts` | Da `04/03/2025`. La otra mitad de la duplicación deliberada. |
+| `Layout.tsx` | La barra lateral: navegación, nombre del taller (que viene de la sesión), toggle de tema y cerrar sesión. |
+| `sesion.tsx` · `api.ts` · `Estado.tsx` | Los mismos tres archivos que en persona, **duplicados a propósito**: son dos claves de sesión y dos ciclos de vida distintos, y compartirlos obligaría a un paquete común con un solo archivo adentro. |
+| `format.ts` | Da `04/03/2025`. La otra mitad de la duplicación deliberada. Suma `formatTimestamp()` para las marcas de tiempo del audit trail. |
 | `pages/` | `Dashboard` (KPIs), `Vehiculos` + `VehiculoDetalle`, `Clientes`, `Trabajos`, `Recordatorios`, `Ajustes`, `Login` y `Registro`. |
 | `components/AuditPanel.tsx` | El panel de auditoría de un vehículo. Solo lo usa el taller, así que se queda acá y no sube a `@cf/ui`. |
 
@@ -327,31 +336,46 @@ pieza en su propio servicio.
 </details>
 
 <details>
-<summary><strong>Despliegue y ADRs</strong> — Docker en VPS, Traefik, y por qué no Next.js</summary>
+<summary><strong>Despliegue y ADRs</strong> — Vercel, Render, Neon, y por qué no Next.js</summary>
 <br />
 
-### Docker en un VPS propio
+### Dónde vive cada pieza
 
-- **Empaquetado**: cada pieza en su contenedor (`Dockerfile` multi-stage: build con
-  pnpm → imagen final mínima). Las apps de Vite compilan a estático y se sirven con
-  Nginx; Nest corre como proceso Node.
-- **Orquestación**: `docker-compose.yml` con `persona`, `taller`, `api`, `worker`
-  (jobs de recordatorios), `postgres`, `redis`.
-- **Host**: un VPS (Hetzner / DigitalOcean tipo) corriendo `docker compose`. Simple
-  y barato para arrancar; con las imágenes ya hechas, migrar después a algo
-  gestionado (Fly.io, ECS, Kubernetes) es un paso de infraestructura, no de código.
-- **Reverse proxy + HTTPS**: **Traefik** delante de todo, certificados automáticos
-  vía Let's Encrypt.
-- **Dominios**: subdominios separados —
-  - `app.carfollow.io` → app de la persona
-  - `taller.carfollow.io` → panel del taller
-  - `api.carfollow.io` → API de Nest
-- **CI/CD**: GitHub Actions build de las imágenes en cada push a `main` → deploy por
-  SSH al VPS (`docker compose pull && docker compose up -d`).
-- **Escalar con el tiempo**: los frontends ya son estáticos (CDN-friendly, escalan
-  solos); si crece la carga, se replica `api` detrás de Traefik (stateless) y se
-  atiende el cuello de botella real, que normalmente es la base de datos (réplicas
-  de lectura / pooling de conexiones) y las notificaciones (worker separado).
+| Pieza | Dónde | Plan | Por qué ahí |
+|---|---|---|---|
+| `apps/persona` y `apps/taller` | **Vercel**, un proyecto por app | Hobby (gratis) | Son SPAs de Vite: compilan a estático y no necesitan servidor. |
+| API de Nest (repo [BF-Car-Follow](https://github.com/Sebastianaac1/BF-Car-Follow)) | **Render**, web service | Free (gratis) | Es un proceso Node de larga duración; no cabe en Vercel. |
+| PostgreSQL | **Neon** | Free (gratis) | Ahí está desde el primer día; el backend entra por `DATABASE_URL`. |
+
+Todo en capa gratuita. Lo que eso implica (verificado en las páginas de precios,
+septiembre 2026):
+
+- **Vercel Hobby** es solo para uso personal, no comercial. Si Car Follow pasa a ser
+  negocio, se sube a Pro.
+- **Render Free** duerme el servicio a los 15 minutos sin tráfico y tarda ~1 minuto en
+  despertar: el primer request después de un rato es lento. Su Postgres gratis expira
+  a los 30 días — por eso la base **no** va ahí.
+- **Neon Free** suspende el cómputo a los 5 minutos sin uso; la primera query después
+  tarda ~1 s.
+
+### Cómo se conectan
+
+- En Vercel cada app es un proyecto con *Root Directory* `apps/persona` o `apps/taller`;
+  el build es el `pnpm build` de esa app (`tsc -b && vite build`) y la salida es `dist/`.
+- Cada app tiene su `vercel.json` con el rewrite de todas las rutas a `index.html`, que es
+  lo que necesita react-router para que entrar directo a `/alertas` no dé 404.
+- **Las dos** apps leen `VITE_API_URL`. Además cada una lee el dominio de la otra
+  (`VITE_URL_TALLER` / `VITE_URL_PERSONA`) para el cruce: entrar con una cuenta que no
+  corresponde a esa app te manda a la otra. Sin las variables, las tres caen a los puertos
+  de desarrollo. Todo lo que Vite expone es **público**: ahí no va ningún secreto.
+- Los paquetes de `packages/` no tienen paso de build (`main` apunta al `.ts`), así que
+  cada app compila sola sin depender de que la otra se haya construido antes.
+- El backend tiene lista blanca de CORS por `ORIGENES_WEB`: **los dominios que Vercel
+  asigne hay que cargarlos ahí después**, o el navegador corta todas las llamadas sin que
+  aparezca un solo error en el servidor. Es el paso que se olvida.
+
+Hoy **nada está desplegado todavía**: esta sección fija la decisión, no describe algo
+que ya corre.
 
 ### ADRs
 
@@ -360,9 +384,11 @@ pieza en su propio servicio.
   a futuro (Capacitor/React Native) — Next añadiría un segundo tier de servidor sin
   aportar nada en este caso. Si más adelante se necesita una landing pública
   indexable, esa sí se construiría con Next como proyecto aparte (`apps/web`).
-- **Docker + VPS propio en vez de plataforma gestionada**: para el tamaño actual del
-  proyecto, un VPS con `docker-compose` es más barato y da control total, sin atarse
-  a un proveedor. Las imágenes Docker hacen la migración a un servicio gestionado
-  trivial si el crecimiento lo justifica más adelante.
+- **Plataformas gestionadas gratis en vez de VPS propio**: el plan original era Docker en
+  un VPS con Traefik. Para el tamaño actual — un prototipo, una persona — eso es más
+  caro y más trabajo de operar que tres servicios gratuitos que despliegan desde `main`.
+  Las apps siguen siendo estáticas y la API un proceso Node sin estado, así que
+  dockerizarlas y moverlas a un VPS o a algo gestionado sigue siendo un paso de
+  infraestructura, no de código.
 
 </details>

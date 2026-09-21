@@ -1,7 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Logo, ThemeToggle } from "@cf/ui";
-import { workshop } from "@cf/mock-data";
 import { useSesion } from "./sesion";
 
 /** Trazos de los iconos de la barra lateral (viewBox 24, stroke currentColor). */
@@ -84,8 +83,12 @@ export function Layout({ children }: { children: ReactNode }) {
           <Logo size={34} radius={10} font={14} />
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 600, fontSize: 13.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {workshop.name}
+              {sesion?.nombre}
             </div>
+            {/* Acá decía el plan ("Pro"), que salía del taller de ejemplo. La columna
+                Workshop.plan existe y arranca en "gratis", pero no hay facturación
+                detrás ni endpoint que la devuelva: mostrar un plan sería inventarlo.
+                Queda el rol, que sí es cierto. */}
             <span
               className="cf-mono"
               style={{
@@ -100,7 +103,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 color: "var(--cf-accent)",
               }}
             >
-              {workshop.plan}
+              Taller
             </span>
           </div>
         </div>

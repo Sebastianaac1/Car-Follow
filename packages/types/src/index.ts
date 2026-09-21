@@ -87,5 +87,4 @@ export interface Client {
   name: string;
   phone: string;
   vehicleIds: string[];
-  plan: "particular";
 }

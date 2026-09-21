@@ -1,11 +1,15 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Logo, ThemeToggle } from "@cf/ui";
-import { accountByEmail, registerAccount } from "@cf/mock-data";
+import type { Account } from "@cf/types";
+import { api } from "../api";
 import { useSesion } from "../sesion";
 
-/** La app de la persona corre en su propio origen. */
-const URL_PERSONA = "http://localhost:5173/registro";
+/** La app de la persona corre en su propio dominio. */
+const URL_PERSONA = import.meta.env.VITE_URL_PERSONA ?? "http://localhost:5173";
+
+// Pasa las 200 líneas a propósito: es un formulario con sus dos variantes de tipo de
+// cuenta. No hay lógica que extraer, solo campos.
 
 /* Duplicado a propósito con Login.tsx: son dos pantallas parecidas, no la
    misma. Regla de tres — se extrae al tercer uso, no antes. */
@@ -32,26 +36,36 @@ export function Registro() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
 
-  const enviar = (e: FormEvent) => {
+  const enviar = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Las cuentas de persona se crean en la otra app: sin servidor no hay un
-    // directorio compartido entre los dos orígenes.
+    // Las cuentas de persona se crean en la otra app: es la misma API, pero ahí el
+    // formulario pide el nombre de una persona y no el de un negocio.
     if (tipo === "persona") {
-      window.location.href = URL_PERSONA;
-      return;
-    }
-    if (accountByEmail(email)) {
-      setError("Ya existe una cuenta con ese correo.");
+      window.location.href = `${URL_PERSONA}/registro`;
       return;
     }
 
-    // La contraseña no se guarda: no hay servidor que la reciba y hashearla
-    // en el cliente no protegería nada.
-    registerAccount({ email: email.trim(), role: "taller", name: nombre.trim() });
-    entrar({ email: email.trim(), nombre: nombre.trim() });
-    navigate("/", { replace: true });
+    setEnviando(true);
+    setError(null);
+
+    try {
+      // El registro con rol "taller" crea el Workshop con este nombre y deja la cuenta
+      // apuntándole: quien se registra es el dueño del taller. El 409 por correo
+      // repetido lo decide el servidor — acá no hay forma de saber qué correos existen.
+      const { token, cuenta } = await api<{ token: string; cuenta: Account }>("/auth/registro", {
+        metodo: "POST",
+        cuerpo: { email: email.trim(), password, nombre: nombre.trim(), rol: "taller" },
+      });
+      // El panel arranca vacío: el taller todavía no tiene ningún cliente cargado.
+      entrar({ token, email: cuenta.email, nombre: cuenta.name });
+      navigate("/", { replace: true });
+    } catch (e) {
+      setError((e as Error).message);
+      setEnviando(false);
+    }
   };
 
   return (
@@ -87,14 +101,19 @@ export function Registro() {
         <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
           <Opcion
             label="Taller"
-            detalle="Panel web"
+            detalle="Panel del negocio"
             activo={tipo === "taller"}
             onClick={() => {
               setTipo("taller");
               setError(null);
             }}
           />
-          <Opcion label="Persona" detalle="App móvil" activo={tipo === "persona"} onClick={() => setTipo("persona")} />
+          <Opcion
+            label="Persona"
+            detalle="Dueño de vehículo"
+            activo={tipo === "persona"}
+            onClick={() => setTipo("persona")}
+          />
         </div>
 
         {tipo === "persona" ? (
@@ -109,7 +128,7 @@ export function Registro() {
               marginBottom: 18,
             }}
           >
-            Las cuentas de persona se crean desde la app móvil. Al continuar te llevamos allá.
+            Las cuentas de persona se crean desde su propia app. Al continuar te llevamos allá.
           </div>
         ) : (
           <>
@@ -156,8 +175,13 @@ export function Registro() {
           </div>
         )}
 
-        <button className="cf-btn" type="submit" style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14 }}>
-          {tipo === "persona" ? "Ir a la app de la persona →" : "Crear cuenta de taller"}
+        <button
+          className="cf-btn"
+          type="submit"
+          disabled={enviando}
+          style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14, opacity: enviando ? 0.6 : 1 }}
+        >
+          {tipo === "persona" ? "Ir a la app de la persona →" : enviando ? "Creando…" : "Crear cuenta de taller"}
         </button>
 
         <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginTop: 16 }}>
@@ -165,8 +189,8 @@ export function Registro() {
         </div>
 
         <p style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--cf-dim)", margin: "14px 0 0" }}>
-          <strong style={{ color: "var(--cf-text)" }}>Demo sin backend.</strong> La cuenta queda en el almacenamiento
-          de este navegador y solo sirve para entrar acá. La contraseña no se guarda en ninguna parte.
+          Este nombre es el que va a firmar cada trabajo que registre el taller en el historial de un vehículo, y el
+          dueño lo ve desde su app. La contraseña viaja al servidor, que la guarda hasheada con Argon2id.
         </p>
       </form>
     </div>
