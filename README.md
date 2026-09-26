@@ -210,7 +210,7 @@ Misma estructura, otra forma. Los archivos que se repiten de nombre **no son el 
 | | Qué hace |
 |---|---|
 | `turbo.json` | Define las tareas. `build` y `typecheck` dependen de `^build`: los packages se construyen antes que las apps. |
-| `pnpm-workspace.yaml` | Declara que `apps/*` y `packages/*` son miembros del workspace. Es lo que hace que `workspace:*` resuelva. |
+| `pnpm-workspace.yaml` | Declara que `apps/*` y `packages/*` son miembros del workspace. Es lo que hace que `workspace:*` resuelva. Además fija la política de instalación: `minimumReleaseAge: 10080` (nada publicado hace menos de 7 días) y `onlyBuiltDependencies: []` (ningún paquete corre scripts de instalación). |
 | `tsconfig.base.json` | Los flags que heredan los cinco paquetes, cada uno con su propio `tsconfig.json` que lo extiende. |
 
 Los datos viven en React state y se reinician al recargar.

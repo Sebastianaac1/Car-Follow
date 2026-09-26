@@ -1,3 +1,12 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Nada publicado hace menos de 7 días (en minutos): cuarentena contra ataques de cadena
+# de suministro en el registro npm.
+minimumReleaseAge: 10080
+
+# Paquetes autorizados a correr scripts de instalación: ninguno. El único que trae uno es
+# esbuild, y no lo necesita: su binario llega por optionalDependencies. Agregar uno acá
+# es una decisión, no un trámite.
+onlyBuiltDependencies: []
