@@ -123,7 +123,7 @@ export function DetailBody({ vehicleId, onBack }: { vehicleId: string; onBack?: 
           ))}
           {upcoming.length === 0 && (
             <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)" }}>
-              Sin mantenciones registradas todavía: no hay desde dónde contar el intervalo.
+              Registra la primera mantención para empezar a contar el intervalo.
             </div>
           )}
         </div>

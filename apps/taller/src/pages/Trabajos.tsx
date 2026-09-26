@@ -56,7 +56,7 @@ export function Trabajos() {
         >
           No hay vehículos en seguimiento, así que no hay dónde registrar un trabajo.
           <br />
-          Cargá un cliente y su vehículo en <strong style={{ color: "var(--cf-accent)" }}>Clientes</strong>.
+          Agrega un cliente y su vehículo en <strong style={{ color: "var(--cf-accent)" }}>Clientes</strong>.
         </div>
       </>
     );
@@ -103,7 +103,7 @@ export function Trabajos() {
         Trabajos
       </div>
       <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginBottom: 22 }}>
-        Registra un trabajo — queda firmado por el taller en el historial del vehículo, y el dueño lo ve desde su app.
+        Registra un trabajo. Queda firmado por el taller en el historial del vehículo y el dueño lo ve en su app.
       </div>
 
       <div style={{ display: "flex", gap: 22, alignItems: "flex-start", flexWrap: "wrap" }}>

@@ -133,7 +133,7 @@ export function NuevoVehiculo() {
       </button>
 
       <p style={{ fontSize: 11.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: "14px 0 0" }}>
-        El vehículo nace con las reglas de recordatorio de su tipo — un auto no se atiende como una moto. Los avisos
+        El vehículo parte con las reglas de recordatorio de su tipo: auto, moto, camión o maquinaria. Los avisos
         empiezan a contar desde el primer trabajo que registres.
       </p>
     </form>

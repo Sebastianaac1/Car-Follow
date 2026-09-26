@@ -126,7 +126,7 @@ export function VehiculoDetalle() {
             <div style={microLabel}>Próximas mantenciones</div>
             {upcoming.length === 0 && (
               <div style={{ fontSize: 12.5, color: "var(--cf-dim)", lineHeight: 1.5 }}>
-                Sin trabajos registrados: no hay desde dónde contar ningún intervalo.
+                Registra el primer trabajo para empezar a contar los intervalos.
               </div>
             )}
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

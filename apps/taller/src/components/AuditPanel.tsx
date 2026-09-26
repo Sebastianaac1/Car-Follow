@@ -86,7 +86,7 @@ export function AuditPanel({
         </>
       ) : (
         <div style={{ fontSize: 12.5, color: "var(--cf-dim)" }}>
-          {vehicle ? "Este vehículo aún no tiene trabajos registrados." : "Elegí un vehículo de la tabla."}
+          {vehicle ? "Este vehículo aún no tiene trabajos registrados." : "Elige un vehículo de la tabla."}
         </div>
       )}
     </div>

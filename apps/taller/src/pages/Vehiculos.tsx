@@ -34,7 +34,7 @@ export function Vehiculos() {
         Vehículos
       </div>
       <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginBottom: 22 }}>
-        Todos los vehículos en seguimiento del taller — abre uno para ver su ficha completa.
+        Todos los vehículos en seguimiento del taller. Abre uno para ver su ficha completa.
       </div>
 
       {vehiculos.length === 0 ? (

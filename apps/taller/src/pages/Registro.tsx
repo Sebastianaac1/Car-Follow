@@ -189,8 +189,8 @@ export function Registro() {
         </div>
 
         <p style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--cf-dim)", margin: "14px 0 0" }}>
-          Este nombre es el que va a firmar cada trabajo que registre el taller en el historial de un vehículo, y el
-          dueño lo ve desde su app. La contraseña viaja al servidor, que la guarda hasheada con Argon2id.
+          Este nombre firma cada trabajo que registres en el historial de un vehículo, y el dueño lo ve en su app.
+          Tu contraseña nunca se guarda tal cual.
         </p>
       </form>
     </div>

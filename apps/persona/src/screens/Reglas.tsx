@@ -27,8 +27,8 @@ export function Reglas() {
         Reglas por pieza
       </div>
       <div style={{ fontSize: 12, color: "var(--cf-dim)", marginBottom: 16, lineHeight: 1.5 }}>
-        Los intervalos son de cada vehículo, no de la pieza: una moto no se atiende como un camión. El aviso salta por
-        km o por tiempo, lo que ocurra primero.
+        Cada vehículo tiene sus propios intervalos, porque una moto no se mantiene igual que un camión. El aviso salta
+        por km o por tiempo, lo que ocurra primero.
       </div>
 
       {mine.length === 0 ? (
@@ -96,7 +96,7 @@ function ReglasDelVehiculo({ vehiculoId }: { vehiculoId: string }) {
         </div>
       ))}
       <div style={{ fontSize: 11.5, color: "var(--cf-dim)", lineHeight: 1.5, marginTop: 2 }}>
-        Por ahora son de solo lectura: editarlas y agregar reglas propias todavía no existe en el servidor.
+        Por ahora solo se pueden ver. Todavía no se pueden editar ni agregar reglas propias.
       </div>
     </div>
   );

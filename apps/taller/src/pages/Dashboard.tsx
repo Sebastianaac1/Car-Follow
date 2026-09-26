@@ -149,7 +149,7 @@ export function Dashboard() {
                   <>
                     Todavía no hay vehículos en seguimiento.
                     <br />
-                    Cargá un cliente en <strong style={{ color: "var(--cf-accent)" }}>Clientes</strong> y después su
+                    Agrega un cliente en <strong style={{ color: "var(--cf-accent)" }}>Clientes</strong> y después su
                     vehículo.
                   </>
                 ) : (

@@ -185,8 +185,7 @@ export function Registro() {
       <div style={{ flex: 1, minHeight: 14 }} />
 
       <p style={{ fontSize: 10.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: 0 }}>
-        La cuenta se crea en el servidor. La contraseña se guarda como un hash Argon2id y no vuelve nunca: ni en esta
-        respuesta ni en ninguna otra.
+        Tu contraseña nunca se guarda tal cual. Solo queda una versión que no se puede revertir.
       </p>
       </form>
     </div>

@@ -86,8 +86,8 @@ export function Clientes() {
         >
           Todavía no hay clientes en la cartera.
           <br />
-          Cargá el primero con <strong style={{ color: "var(--cf-accent)" }}>+ Nuevo cliente</strong>: no necesita
-          tener cuenta en Car Follow para que le lleves el historial.
+          Agrega el primero con <strong style={{ color: "var(--cf-accent)" }}>+ Nuevo cliente</strong>. No necesita
+          cuenta en Car Follow para que le lleves el historial.
         </div>
       )}
 
@@ -242,8 +242,8 @@ function FormularioCliente({ onListo }: { onListo: () => void }) {
       </button>
 
       <p style={{ fontSize: 11.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: "12px 0 0" }}>
-        El cliente no necesita cuenta en Car Follow: el taller le lleva el historial igual. Si después se registra,
-        hoy no hay forma de enlazar las dos cosas.
+        El cliente no necesita cuenta en Car Follow para que registres su historial. Si después crea una cuenta, por
+        ahora no se puede enlazar con esta ficha.
       </p>
     </form>
   );

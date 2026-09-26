@@ -133,8 +133,7 @@ export function Login() {
         </div>
 
         <p style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--cf-dim)", margin: "14px 0 0" }}>
-          El tipo de cuenta no se elige: sale de la cuenta al entrar, y si es de persona te mandamos a su app. La
-          contraseña viaja al servidor, que la compara contra un hash Argon2id — nunca se guarda en el navegador.
+          Si tu cuenta es de persona, al entrar te llevamos a su app. Tu contraseña no se guarda en este navegador.
         </p>
       </form>
     </div>

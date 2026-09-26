@@ -49,7 +49,7 @@ export function Recordatorios() {
         Recordatorios
       </div>
       <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginBottom: 22 }}>
-        {lista.length} pendientes · se generan solos con cada trabajo registrado, por km o por tiempo — lo que ocurra
+        {lista.length} pendientes · se generan solos con cada trabajo registrado, por km o por tiempo, lo que ocurra
         primero.
       </div>
 

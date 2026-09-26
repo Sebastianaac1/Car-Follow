@@ -54,8 +54,8 @@ export function Ajustes() {
             {sesion?.email}
           </div>
           <p style={{ fontSize: 11.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: "0 0 14px" }}>
-            Esta cuenta es la del dueño del taller. Sumar empleados con su propio acceso todavía no existe: hoy cada
-            registro de taller crea un taller nuevo, así que dos cuentas nunca comparten cartera.
+            Esta es la cuenta del dueño del taller. Por ahora no se pueden sumar empleados con acceso propio: cada
+            cuenta de taller nueva crea un taller aparte, con su propia cartera.
           </p>
           <button
             onClick={salir}
