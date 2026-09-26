@@ -1,22 +1,13 @@
 import { Link } from "react-router-dom";
-import { AuthorPill } from "@cf/ui";
+import { AuthorPill, Patente } from "@cf/ui";
 import type { MaintenanceRecord, UpcomingService, Vehicle } from "@cf/types";
-import { formatDate, formatTimestamp, km } from "../format";
+import { formatDate, formatTimestamp, km, loQueViene } from "../format";
 
 /**
- * La ficha lateral del dashboard. Recibe lo que va a mostrar en vez de pedirlo: el
- * dashboard ya trae la flota, el historial y los recordatorios de toda la cartera, así
- * que cambiar de fila seleccionada no dispara ninguna petición nueva.
+ * La ficha lateral del resumen. Recibe lo que va a mostrar en vez de pedirlo: el resumen
+ * ya trae la flota, el historial y los recordatorios de toda la cartera, así que cambiar
+ * de fila seleccionada no dispara ninguna petición nueva.
  */
-const microLabel: React.CSSProperties = {
-  fontSize: 10.5,
-  letterSpacing: 0.5,
-  textTransform: "uppercase",
-  color: "var(--cf-dim)",
-  marginBottom: 6,
-  fontFamily: "'IBM Plex Mono', monospace",
-};
-
 export function AuditPanel({
   vehicle,
   ultimo,
@@ -26,83 +17,62 @@ export function AuditPanel({
   ultimo?: MaintenanceRecord;
   proximo?: UpcomingService;
 }) {
-  return (
-    <div style={{ border: "1px solid var(--cf-border)", borderRadius: 16, background: "var(--cf-surface)", padding: 18 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
-        <div style={microLabel}>Ficha · {vehicle?.name ?? "—"}</div>
-        {vehicle && (
-          <Link to={`/vehiculos/${vehicle.id}`} style={{ fontSize: 11.5, fontWeight: 600, whiteSpace: "nowrap" }}>
-            Ver ficha completa →
-          </Link>
-        )}
+  if (!vehicle) {
+    return (
+      <div className="cf-panel" style={{ padding: 20, color: "var(--cf-dim)" }}>
+        Elige un vehículo de la tabla.
       </div>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 17, marginBottom: 14 }}>
-        {ultimo?.title ?? "Sin registros"}
-      </div>
+    );
+  }
 
+  return (
+    <div className="cf-panel" style={{ padding: 20 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+        <Patente valor={vehicle.plate} alto={28} />
+        <Link to={`/vehiculos/${vehicle.id}`} style={{ fontSize: 14.5, fontWeight: 600, whiteSpace: "nowrap" }}>
+          Abrir ficha
+        </Link>
+      </div>
+      <div style={{ fontWeight: 600, fontSize: 17, margin: "10px 0 16px" }}>{vehicle.name}</div>
+
+      <h2 style={{ fontSize: 13, fontWeight: 500, color: "var(--cf-dim)", margin: "0 0 4px" }}>Último trabajo</h2>
       {ultimo ? (
         <>
-          <div style={{ display: "flex", flexDirection: "column", gap: 9, marginBottom: 18, fontSize: 12.5 }}>
-            <Row label="Fecha" value={formatDate(ultimo.date)} mono />
-            <Row label="Kilometraje" value={`${km(ultimo.odometer)} km`} mono />
-            <Row label="Próximo" value={proximo ? `${proximo.part} · ${proximo.remainingLabel}` : "sin pendientes"} mono accent />
-            <Row label="Piezas" value={ultimo.parts.join(", ") || "—"} />
+          <div className="cf-display" style={{ fontSize: 24, marginBottom: 12 }}>
+            {ultimo.title}
           </div>
+          <dl className="cf-num" style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "8px 16px", margin: "0 0 20px", fontSize: 14.5 }}>
+            <dt style={{ color: "var(--cf-dim)" }}>Fecha</dt>
+            <dd style={{ margin: 0, textAlign: "right" }}>{formatDate(ultimo.date)}</dd>
+            <dt style={{ color: "var(--cf-dim)" }}>Kilometraje</dt>
+            <dd style={{ margin: 0, textAlign: "right" }}>{km(ultimo.odometer)} km</dd>
+            <dt style={{ color: "var(--cf-dim)" }}>Lo que viene</dt>
+            <dd style={{ margin: 0, textAlign: "right", fontWeight: 600, color: proximo ? "var(--cf-text)" : "var(--cf-dim)" }}>
+              {proximo ? loQueViene(proximo) : "Sin pendientes"}
+            </dd>
+            <dt style={{ color: "var(--cf-dim)" }}>Piezas</dt>
+            <dd style={{ margin: 0, textAlign: "right" }}>{ultimo.parts.join(", ") || "Ninguna"}</dd>
+          </dl>
 
-          <div style={microLabel}>Historial de modificaciones</div>
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            {ultimo.revisions.map((rev, i) => (
-              <div
-                key={rev.id}
-                style={{
-                  borderLeft: "2px solid var(--cf-border)",
-                  paddingLeft: 14,
-                  marginLeft: 4,
-                  paddingBottom: i === ultimo.revisions.length - 1 ? 0 : 12,
-                  position: "relative",
-                }}
-              >
-                <span
-                  style={{
-                    position: "absolute",
-                    left: -5,
-                    top: 2,
-                    width: 8,
-                    height: 8,
-                    borderRadius: 99,
-                    background: rev.author.role === "taller" ? "var(--cf-accent)" : "var(--cf-persona)",
-                  }}
-                />
-                <div style={{ fontSize: 12 }}>{rev.description}</div>
-                <div className="cf-mono" style={{ fontSize: 10, color: "var(--cf-dim)", marginTop: 2 }}>
-                  {formatTimestamp(rev.timestamp)}
-                </div>
-                <div style={{ marginTop: 5 }}>
+          {/* Audit trail: cada modificación queda firmada, nada se sobrescribe. */}
+          <h2 style={{ fontSize: 13, fontWeight: 500, color: "var(--cf-dim)", margin: "0 0 10px" }}>Cambios firmados</h2>
+          <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 12 }}>
+            {ultimo.revisions.map((rev) => (
+              <li key={rev.id}>
+                <div style={{ fontSize: 14.5 }}>{rev.description}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
                   <AuthorPill role={rev.author.role} name={rev.author.name} />
+                  <span className="cf-num" style={{ fontSize: 13, color: "var(--cf-dim)" }}>
+                    {formatTimestamp(rev.timestamp)}
+                  </span>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </>
       ) : (
-        <div style={{ fontSize: 12.5, color: "var(--cf-dim)" }}>
-          {vehicle ? "Este vehículo aún no tiene trabajos registrados." : "Elige un vehículo de la tabla."}
-        </div>
+        <p style={{ margin: 0, color: "var(--cf-dim)" }}>Este vehículo aún no tiene trabajos registrados.</p>
       )}
-    </div>
-  );
-}
-
-function Row({ label, value, mono, accent }: { label: string; value: string; mono?: boolean; accent?: boolean }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-      <span style={{ color: "var(--cf-dim)" }}>{label}</span>
-      <span
-        className={mono ? "cf-mono" : undefined}
-        style={{ textAlign: "right", color: accent ? "var(--cf-accent)" : "var(--cf-text)" }}
-      >
-        {value}
-      </span>
     </div>
   );
 }

@@ -1,23 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { StatusBadge } from "@cf/ui";
+import { PiCar, PiCheckCircle, PiClock, PiPhone, PiPlus, PiWarning, PiWhatsappLogo } from "react-icons/pi";
+import { Patente, StatusBadge } from "@cf/ui";
 import type { Client, UpcomingService, Vehicle } from "@cf/types";
 import { useApi } from "../api";
 import { Cargando, ErrorApi } from "../Estado";
 import { useSesion } from "../sesion";
 import { formatDate, km } from "../format";
-
-// Pasa las 200 líneas a propósito: la lista y el panel de acciones del recordatorio
-// elegido son las dos mitades de una misma pantalla maestro-detalle.
-
-const microLabel: React.CSSProperties = {
-  fontSize: 10.5,
-  letterSpacing: 0.5,
-  textTransform: "uppercase",
-  color: "var(--cf-dim)",
-  marginBottom: 10,
-  fontFamily: "'IBM Plex Mono', monospace",
-};
 
 export function Recordatorios() {
   const navigate = useNavigate();
@@ -45,78 +34,74 @@ export function Recordatorios() {
 
   return (
     <>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 24, marginBottom: 4 }}>
+      <h1 className="cf-display" style={{ fontSize: 40, margin: 0 }}>
         Recordatorios
-      </div>
-      <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginBottom: 22 }}>
-        {lista.length} pendientes · se generan solos con cada trabajo registrado, por km o por tiempo, lo que ocurra
-        primero.
-      </div>
+      </h1>
+      <p className="cf-num" style={{ color: "var(--cf-dim)", margin: "6px 0 24px" }}>
+        {lista.length} {lista.length === 1 ? "pendiente" : "pendientes"}. Se generan solos con cada trabajo registrado,
+        por km o por tiempo, lo que ocurra primero.
+      </p>
 
-      <div style={{ display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" }}>
-        <div style={{ flex: "1.3 1 340px", minWidth: 0, display: "flex", flexDirection: "column", gap: 9 }}>
-          {lista.map((u) => {
-            const v = vehiculos.find((x) => x.id === u.vehicleId);
-            const active = selected?.id === u.id;
-            return (
-              <div
-                key={u.id}
-                className="cf-tap"
-                onClick={() => setSelectedId(u.id)}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "13px 16px",
-                  border: `1px solid ${active ? "var(--cf-accent)" : "var(--cf-border)"}`,
-                  borderRadius: 12,
-                  background: active ? "var(--cf-accent-soft)" : "var(--cf-surface)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
-                  <span
-                    style={{
-                      width: 10,
-                      height: 10,
-                      flexShrink: 0,
-                      borderRadius: 99,
-                      background: u.status === "vencido" ? "var(--cf-danger)" : "var(--cf-warn)",
-                    }}
-                  />
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>
-                      {v?.name ?? "Vehículo"} · {u.part}
-                    </div>
-                    <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)", marginTop: 2 }}>
-                      {v?.ownerName ?? "—"} · {u.remainingLabel}
-                    </div>
-                  </div>
-                </div>
-                <StatusBadge status={u.status} />
-              </div>
-            );
-          })}
-
-          {lista.length === 0 && (
-            <div style={{ padding: "28px 16px", textAlign: "center", fontSize: 13, color: "var(--cf-dim)" }}>
-              Ningún vehículo de la cartera tiene mantenciones pendientes.
-            </div>
-          )}
+      {lista.length === 0 ? (
+        <div className="cf-panel" style={{ display: "flex", gap: 12, alignItems: "center", padding: 20, maxWidth: 560 }}>
+          <PiCheckCircle aria-hidden size={26} color="var(--cf-ok)" />
+          Ningún vehículo de la cartera tiene mantenciones pendientes.
         </div>
+      ) : (
+        <div style={{ display: "flex", gap: 24, alignItems: "flex-start", flexWrap: "wrap" }}>
+          <div className="cf-panel cf-lista" style={{ flex: "1.3 1 380px", minWidth: 0, overflow: "hidden" }}>
+            {lista.map((u) => {
+              const v = vehiculos.find((x) => x.id === u.vehicleId);
+              const active = selected?.id === u.id;
+              const Icono = u.status === "vencido" ? PiWarning : PiClock;
+              return (
+                <button
+                  key={u.id}
+                  className="cf-tap"
+                  onClick={() => setSelectedId(u.id)}
+                  aria-pressed={active}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    width: "100%",
+                    padding: "14px 16px",
+                    border: "none",
+                    boxShadow: active ? "inset 3px 0 0 var(--cf-accent)" : "none",
+                    background: active ? "var(--cf-accent-soft)" : "transparent",
+                    font: "inherit",
+                    color: "inherit",
+                    textAlign: "left",
+                  }}
+                >
+                  <Icono aria-hidden size={22} color={u.status === "vencido" ? "var(--cf-danger)" : "var(--cf-warn)"} style={{ flexShrink: 0 }} />
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: "block", fontWeight: 600 }}>
+                      {u.part} de {v?.name ?? "un vehículo"}
+                    </span>
+                    <span className="cf-num" style={{ display: "block", fontSize: 14, color: "var(--cf-dim)" }}>
+                      {v?.ownerName ?? "Cliente sin nombre"}, {u.remainingLabel}
+                    </span>
+                  </span>
+                  <StatusBadge status={u.status} />
+                </button>
+              );
+            })}
+          </div>
 
-        <div style={{ flex: "1 1 280px", minWidth: 0 }}>
-          {selected && vehiculoSel && (
-            <PanelAcciones
-              upcoming={selected}
-              vehicle={vehiculoSel}
-              cliente={clienteSel}
-              taller={sesion?.nombre ?? "tu taller"}
-              onIr={navigate}
-            />
-          )}
+          <div style={{ flex: "1 1 320px", minWidth: 0, position: "sticky", top: 24 }}>
+            {selected && vehiculoSel && (
+              <PanelAcciones
+                upcoming={selected}
+                vehicle={vehiculoSel}
+                cliente={clienteSel}
+                taller={sesion?.nombre ?? "tu taller"}
+                onIr={navigate}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
@@ -135,89 +120,65 @@ function PanelAcciones({
   onIr: (to: string) => void;
 }) {
   const telefono = cliente?.phone.replace(/\D/g, "") ?? "";
+  const nombre = cliente?.name ?? vehicle.ownerName;
 
   // El nombre del taller sale de la sesión, no de una constante: el mensaje lo firma
   // quien está usando el panel.
   const mensaje = encodeURIComponent(
-    `Hola ${cliente?.name ?? vehicle.ownerName}, le escribimos de ${taller} por su ${vehicle.name} (${vehicle.plate}): ` +
+    `Hola ${nombre}, le escribimos de ${taller} por su ${vehicle.name} (${vehicle.plate}): ` +
       `${upcoming.part.toLowerCase()} ${upcoming.status === "vencido" ? "está" : "vence en"} ${upcoming.remainingLabel}. ` +
       `¿Le agendamos una hora?`,
   );
 
   return (
-    <div style={{ border: "1px solid var(--cf-border)", borderRadius: 16, background: "var(--cf-surface)", padding: 18 }}>
-      <div style={microLabel}>Recordatorio · {vehicle.plate}</div>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 18 }}>
+    <div className="cf-panel" style={{ padding: 20 }}>
+      <Patente valor={vehicle.plate} alto={28} />
+      <div className="cf-display" style={{ fontSize: 28, margin: "12px 0 2px" }}>
         {upcoming.part}
       </div>
-      <div style={{ fontSize: 12.5, color: "var(--cf-dim)", margin: "4px 0 16px" }}>
-        {vehicle.name} · {km(vehicle.odometer)} km
+      <div className="cf-num" style={{ color: "var(--cf-dim)", marginBottom: 16 }}>
+        {vehicle.name}, {km(vehicle.odometer)} km
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 9, fontSize: 12.5, marginBottom: 18 }}>
-        <Fila label="Estado" value={upcoming.remainingLabel} destacado={upcoming.status === "vencido"} />
-        <Fila label="Regla" value={upcoming.ruleLabel} />
-        <Fila label="Último trabajo" value={`${formatDate(upcoming.since.date)} · ${km(upcoming.since.odometer)} km`} />
-        <Fila label="Cliente" value={cliente?.name ?? vehicle.ownerName} />
-        <Fila label="Teléfono" value={cliente?.phone || "—"} />
-      </div>
+      <dl className="cf-num" style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "8px 16px", margin: "0 0 20px", fontSize: 14.5 }}>
+        <dt style={{ color: "var(--cf-dim)" }}>Estado</dt>
+        <dd style={{ margin: 0, textAlign: "right", fontWeight: 600, color: upcoming.status === "vencido" ? "var(--cf-danger)" : "var(--cf-warn)" }}>
+          {upcoming.remainingLabel}
+        </dd>
+        <dt style={{ color: "var(--cf-dim)" }}>Regla</dt>
+        <dd style={{ margin: 0, textAlign: "right" }}>{upcoming.ruleLabel}</dd>
+        <dt style={{ color: "var(--cf-dim)" }}>Último trabajo</dt>
+        <dd style={{ margin: 0, textAlign: "right" }}>
+          {formatDate(upcoming.since.date)}, {km(upcoming.since.odometer)} km
+        </dd>
+        <dt style={{ color: "var(--cf-dim)" }}>Cliente</dt>
+        <dd style={{ margin: 0, textAlign: "right" }}>{nombre}</dd>
+        <dt style={{ color: "var(--cf-dim)" }}>Teléfono</dt>
+        <dd style={{ margin: 0, textAlign: "right" }}>{cliente?.phone || "Sin teléfono"}</dd>
+      </dl>
 
-      <div style={microLabel}>Acciones</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {telefono && (
           <>
-            <a className="cf-tap" href={`tel:${telefono}`} style={accion}>
-              Llamar a {cliente?.name ?? vehicle.ownerName}
-            </a>
-            <a
-              className="cf-tap"
-              href={`https://wa.me/${telefono}?text=${mensaje}`}
-              target="_blank"
-              rel="noreferrer"
-              style={accion}
-            >
+            <a className="cf-btn-quieto" href={`https://wa.me/${telefono}?text=${mensaje}`} target="_blank" rel="noreferrer" style={{ justifyContent: "flex-start" }}>
+              <PiWhatsappLogo aria-hidden />
               Enviar recordatorio por WhatsApp
+            </a>
+            <a className="cf-btn-quieto" href={`tel:${telefono}`} style={{ justifyContent: "flex-start" }}>
+              <PiPhone aria-hidden />
+              Llamar a {nombre}
             </a>
           </>
         )}
-        <button className="cf-tap" onClick={() => onIr(`/vehiculos/${vehicle.id}`)} style={{ ...accion, textAlign: "left" }}>
+        <button className="cf-btn-quieto" onClick={() => onIr(`/vehiculos/${vehicle.id}`)} style={{ justifyContent: "flex-start" }}>
+          <PiCar aria-hidden />
           Ver ficha del vehículo
         </button>
-        <button
-          className="cf-btn"
-          onClick={() => onIr(`/trabajos?vehiculo=${vehicle.id}`)}
-          style={{ padding: "10px 14px", borderRadius: 10, fontSize: 13, textAlign: "left" }}
-        >
+        <button className="cf-btn" onClick={() => onIr(`/trabajos?vehiculo=${vehicle.id}`)} style={{ justifyContent: "flex-start" }}>
+          <PiPlus aria-hidden />
           Registrar el trabajo
         </button>
       </div>
-    </div>
-  );
-}
-
-const accion: React.CSSProperties = {
-  display: "block",
-  padding: "10px 14px",
-  borderRadius: 10,
-  fontSize: 13,
-  fontWeight: 500,
-  border: "1px solid var(--cf-border)",
-  background: "var(--cf-bg)",
-  color: "var(--cf-text)",
-  width: "100%",
-  fontFamily: "inherit",
-};
-
-function Fila({ label, value, destacado }: { label: string; value: string; destacado?: boolean }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-      <span style={{ color: "var(--cf-dim)", flexShrink: 0 }}>{label}</span>
-      <span
-        className="cf-mono"
-        style={{ textAlign: "right", fontSize: 11.5, color: destacado ? "var(--cf-danger)" : "var(--cf-text)" }}
-      >
-        {value}
-      </span>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { PiCheckCircle, PiClock, PiStamp, PiWarning } from "react-icons/pi";
 import type { MaintenanceRecord, UpcomingService, Vehicle } from "@cf/types";
 import { useApi } from "../api";
 import { Cargando, ErrorApi } from "../Estado";
@@ -25,102 +26,75 @@ export function Alertas() {
   // Avisos de lo que el taller escribió en tu historial, lo más reciente primero. Viene
   // ordenado por fecha desde el servidor.
   const delTaller = (historial.datos ?? []).filter((r) => r.author.role === "taller").slice(0, 2);
-
-  const vacio = (pendientes.datos ?? []).length === 0 && delTaller.length === 0;
+  const lista = pendientes.datos ?? [];
 
   return (
-    <div style={{ padding: "14px 20px" }}>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 22, marginBottom: 16 }}>
+    <div style={{ maxWidth: 760 }}>
+      <h1 className="cf-display" style={{ fontSize: 40, margin: "0 0 20px" }}>
         Alertas
-      </div>
+      </h1>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-        {(pendientes.datos ?? []).map((u) => {
-          const vencido = u.status === "vencido";
-          return (
-            <div
-              key={u.id}
-              style={{
-                border: `1px solid ${vencido ? "var(--cf-danger)" : "var(--cf-border)"}`,
-                borderRadius: 16,
-                background: vencido ? "var(--cf-danger-soft)" : "var(--cf-surface)",
-                padding: 14,
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                <span
-                  style={{ fontWeight: 600, fontSize: 14, color: vencido ? "var(--cf-danger)" : "var(--cf-warn)" }}
-                >
-                  {u.part} {vencido ? "vencido" : "pronto"}
-                </span>
-                <span className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-dim)" }}>
-                  {nombreDe(u.vehicleId)}
-                </span>
-              </div>
-              <div style={{ fontSize: 12.5, color: "var(--cf-text)", lineHeight: 1.45 }}>
-                {vencido ? `Superaste el intervalo: ${u.remainingLabel}.` : `Faltan ${u.remainingLabel}.`} La regla es{" "}
-                {u.ruleLabel}.
-              </div>
-              <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-                <button
-                  className="cf-tap"
-                  onClick={() => navigate("/registrar")}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: 10,
-                    fontSize: 12,
-                    fontWeight: 600,
-                    fontFamily: "inherit",
-                    border: "none",
-                    background: vencido ? "var(--cf-danger)" : "var(--cf-accent)",
-                    color: "var(--cf-on-accent)",
-                  }}
-                >
-                  Ya lo hice
-                </button>
-                <button
-                  className="cf-tap"
-                  onClick={() => navigate(`/vehiculo/${u.vehicleId}`)}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: 10,
-                    fontSize: 12,
-                    fontFamily: "inherit",
-                    border: "1px solid var(--cf-border)",
-                    background: "transparent",
-                    color: "var(--cf-text)",
-                  }}
-                >
-                  Ver vehículo
-                </button>
-              </div>
-            </div>
-          );
-        })}
+      {lista.length === 0 && delTaller.length === 0 && (
+        <div className="cf-panel" style={{ display: "flex", gap: 12, alignItems: "center", padding: 20 }}>
+          <PiCheckCircle aria-hidden size={26} color="var(--cf-ok)" />
+          No tienes alertas. Todas tus piezas están dentro de su intervalo.
+        </div>
+      )}
 
-        {delTaller.map((r) => (
-          <div
-            key={r.id}
-            style={{ border: "1px solid var(--cf-border)", borderRadius: 16, background: "var(--cf-surface)", padding: 14 }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-              <span style={{ fontWeight: 600, fontSize: 14 }}>Registro del taller</span>
-              <span className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-dim)" }}>
-                {formatDate(r.date)}
-              </span>
-            </div>
-            <div style={{ fontSize: 12.5, lineHeight: 1.45 }}>
-              {r.author.name} añadió “{r.title.toLowerCase()}” a tu {nombreDe(r.vehicleId)}. Revísalo y confírmalo.
-            </div>
+      {lista.length > 0 && (
+        <div className="cf-panel cf-lista" style={{ marginBottom: 28 }}>
+          {lista.map((u) => {
+            const vencido = u.status === "vencido";
+            const Icono = vencido ? PiWarning : PiClock;
+            return (
+              <div key={u.id} style={{ display: "flex", gap: 14, padding: "16px 18px" }}>
+                <Icono aria-hidden size={24} color={vencido ? "var(--cf-danger)" : "var(--cf-warn)"} style={{ flexShrink: 0, marginTop: 1 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+                    <span style={{ fontWeight: 600, color: vencido ? "var(--cf-danger)" : "var(--cf-warn)" }}>
+                      {u.part} {vencido ? "vencido" : "pronto"}
+                    </span>
+                    <span style={{ fontSize: 14, color: "var(--cf-dim)" }}>{nombreDe(u.vehicleId)}</span>
+                  </div>
+                  <p className="cf-num" style={{ margin: "4px 0 12px", fontSize: 14.5 }}>
+                    {vencido ? `Superaste el intervalo: ${u.remainingLabel}.` : `Faltan ${u.remainingLabel}.`} La regla es{" "}
+                    {u.ruleLabel}.
+                  </p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <button className="cf-btn" onClick={() => navigate("/registrar")} style={{ height: 36 }}>
+                      Ya lo hice
+                    </button>
+                    <button className="cf-btn-quieto" onClick={() => navigate(`/vehiculo/${u.vehicleId}`)} style={{ height: 36 }}>
+                      Ver vehículo
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {delTaller.length > 0 && (
+        <section>
+          <h2 className="cf-display" style={{ fontSize: 24, margin: "0 0 12px" }}>
+            Lo que registró el taller
+          </h2>
+          <div className="cf-panel cf-lista">
+            {delTaller.map((r) => (
+              <div key={r.id} style={{ display: "flex", gap: 14, padding: "16px 18px" }}>
+                <PiStamp aria-hidden size={24} color="var(--cf-accent)" style={{ flexShrink: 0, marginTop: 1 }} />
+                <div>
+                  <div className="cf-num" style={{ fontSize: 14, color: "var(--cf-dim)" }}>{formatDate(r.date)}</div>
+                  <p style={{ margin: "2px 0 0", fontSize: 14.5 }}>
+                    {r.author.name} añadió “{r.title.toLowerCase()}” a tu {nombreDe(r.vehicleId)}. Revísalo y confírmalo.
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-
-        {vacio && (
-          <div style={{ fontSize: 12.5, color: "var(--cf-dim)", lineHeight: 1.5 }}>
-            No tienes alertas: todas tus piezas están dentro de su intervalo.
-          </div>
-        )}
-      </div>
+        </section>
+      )}
     </div>
   );
 }

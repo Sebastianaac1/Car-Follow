@@ -1,21 +1,15 @@
-import { useNavigate } from "react-router-dom";
-import { StatusBadge } from "@cf/ui";
+import { Link } from "react-router-dom";
+import { Patente, StatusBadge, tiposDeVehiculo } from "@cf/ui";
 import type { UpcomingService, Vehicle } from "@cf/types";
 import { useApi } from "../api";
 import { Cargando, ErrorApi } from "../Estado";
-import { km } from "../format";
+import { km, loQueViene } from "../format";
 
-const cols = "1.4fr 1fr 1fr 1.1fr 0.8fr";
-const kindLabel: Record<Vehicle["kind"], string> = {
-  auto: "Auto",
-  moto: "Moto",
-  camion: "Camión",
-  maquinaria: "Maquinaria",
-};
+// Anchos fijos en los extremos: cada fila es su propia grilla, y con "auto" el encabezado
+// y las filas medían distinto y las columnas quedaban corridas.
+const cols = "120px minmax(160px, 1.4fr) minmax(0, 1fr) minmax(0, 1.3fr) 112px";
 
 export function Vehiculos() {
-  const navigate = useNavigate();
-
   // Las dos rutas ya vienen filtradas por el taller de la sesión: la cadena
   // Account → Workshop → WorkshopClient → Client → Vehicle la resuelve el servidor.
   const flota = useApi<Vehicle[]>("/taller/vehiculos");
@@ -30,104 +24,83 @@ export function Vehiculos() {
 
   return (
     <>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 24, marginBottom: 4 }}>
+      <h1 className="cf-display" style={{ fontSize: 40, margin: 0 }}>
         Vehículos
-      </div>
-      <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginBottom: 22 }}>
+      </h1>
+      <p style={{ color: "var(--cf-dim)", margin: "6px 0 24px" }}>
         Todos los vehículos en seguimiento del taller. Abre uno para ver su ficha completa.
-      </div>
+      </p>
 
       {vehiculos.length === 0 ? (
-        <div
-          style={{
-            border: "1px dashed var(--cf-border)",
-            borderRadius: 14,
-            padding: "30px 20px",
-            textAlign: "center",
-            fontSize: 13,
-            color: "var(--cf-dim)",
-            lineHeight: 1.6,
-          }}
-        >
-          Todavía no hay vehículos en seguimiento.
-          <br />
-          Los vehículos se cargan desde la ficha de su cliente:{" "}
-          <button
-            onClick={() => navigate("/clientes")}
-            className="cf-tap"
-            style={{
-              border: "none",
-              background: "none",
-              padding: 0,
-              font: "inherit",
-              color: "var(--cf-accent)",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            ir a Clientes →
-          </button>
+        <div className="cf-panel" style={{ padding: "24px 20px", maxWidth: 560 }}>
+          <div style={{ fontWeight: 600 }}>Todavía no hay vehículos en seguimiento</div>
+          <p style={{ margin: "4px 0 0", color: "var(--cf-dim)" }}>
+            Los vehículos se cargan desde la ficha de su cliente, en <Link to="/clientes">Clientes</Link>.
+          </p>
         </div>
       ) : (
-        <>
-          <div
-            className="cf-mono"
-            style={{
-              display: "grid",
-              gridTemplateColumns: cols,
-              padding: "0 14px 10px",
-              fontSize: 10.5,
-              letterSpacing: 0.5,
-              textTransform: "uppercase",
-              color: "var(--cf-dim)",
-            }}
-          >
-            <span>Vehículo</span>
-            <span>Tipo</span>
-            <span>Cliente</span>
-            <span>Próximo</span>
-            <span>Estado</span>
+        <div className="cf-panel" style={{ overflowX: "auto" }}>
+          <div style={{ minWidth: 760 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: cols,
+                gap: 16,
+                padding: "12px 16px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "var(--cf-dim)",
+                borderBottom: "1px solid var(--cf-border)",
+              }}
+            >
+              <span>Patente</span>
+              <span>Vehículo</span>
+              <span>Cliente</span>
+              <span>Lo que viene</span>
+              <span>Estado</span>
+            </div>
+            <div className="cf-lista">
+              {vehiculos.map((v) => {
+                // La lista viene ordenada por urgencia desde el servidor: el primero que
+                // coincide con este vehículo ya es el peor pendiente que tiene.
+                const next = recordatorios.find((u) => u.vehicleId === v.id);
+                const { label, Icono } = tiposDeVehiculo[v.kind];
+                return (
+                  <Link
+                    key={v.id}
+                    to={`/vehiculos/${v.id}`}
+                    className="cf-tap"
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: cols,
+                      gap: 16,
+                      alignItems: "center",
+                      padding: "12px 16px",
+                      color: "inherit",
+                      textDecoration: "none",
+                    }}
+                  >
+                    <span>
+                      <Patente valor={v.plate} alto={26} />
+                    </span>
+                    <span>
+                      <span style={{ display: "block", fontWeight: 600 }}>{v.name}</span>
+                      <span className="cf-num" style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 13.5, color: "var(--cf-dim)" }}>
+                        <Icono aria-hidden />
+                        {label}, {km(v.odometer)} km
+                      </span>
+                    </span>
+                    <span style={{ fontSize: 14.5 }}>{v.ownerName}</span>
+                    <span className="cf-num" style={{ fontSize: 14 }}>
+                      {next ? loQueViene(next) : "Sin pendientes"}
+                    </span>
+                    <StatusBadge status={next?.status ?? "ok"} />
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {vehiculos.map((v) => {
-              // La lista viene ordenada por urgencia desde el servidor: el primero que
-              // coincide con este vehículo ya es el peor pendiente que tiene.
-              const next = recordatorios.find((u) => u.vehicleId === v.id);
-              return (
-                <div
-                  key={v.id}
-                  className="cf-tap"
-                  role="link"
-                  tabIndex={0}
-                  onClick={() => navigate(`/vehiculos/${v.id}`)}
-                  onKeyDown={(e) => e.key === "Enter" && navigate(`/vehiculos/${v.id}`)}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: cols,
-                    alignItems: "center",
-                    padding: "12px 14px",
-                    border: "1px solid var(--cf-border)",
-                    borderRadius: 12,
-                    background: "var(--cf-surface)",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 13.5 }}>{v.name}</div>
-                    <div className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-dim)" }}>
-                      {v.plate} · {km(v.odometer)} km
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 12.5 }}>{kindLabel[v.kind]}</span>
-                  <span style={{ fontSize: 12.5 }}>{v.ownerName}</span>
-                  <span className="cf-mono" style={{ fontSize: 11.5 }}>
-                    {next ? `${next.part} · ${next.remainingLabel}` : "sin pendientes"}
-                  </span>
-                  <StatusBadge status={next?.status ?? "ok"} />
-                </div>
-              );
-            })}
-          </div>
-        </>
+        </div>
       )}
     </>
   );

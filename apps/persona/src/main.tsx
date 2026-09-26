@@ -8,7 +8,7 @@ import { App } from "./App";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider defaultTheme="dark">
+    <ThemeProvider defaultTheme="light">
       <BrowserRouter>
         <App />
       </BrowserRouter>

@@ -1,4 +1,9 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+/* Barlow está inspirada en la señalética vial; su versión condensada se usa para títulos y
+   patentes, donde el ancho angosto es parte de la voz. Una sola familia en dos anchos. */
+@import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap");
+
+/* Pasa las 200 líneas a propósito: son las piezas base que usan las dos apps (botones,
+   campos, bloques, listas y la patente), cada una con su comentario. */
 
 *,
 *::before,
@@ -14,40 +19,60 @@ body,
 }
 
 body {
-  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-family: "Barlow", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
   background: var(--cf-bg);
   color: var(--cf-text);
-  transition: background 0.25s ease, color 0.25s ease;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
   color: var(--cf-accent);
-  text-decoration: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }
 a:hover {
-  color: var(--cf-text);
+  text-decoration-thickness: 2px;
 }
 
 button {
   font-family: inherit;
 }
 
-.cf-mono {
-  font-family: "IBM Plex Mono", monospace;
-}
+/* Títulos: Barlow Condensed. El tamaño lo pone cada pantalla. */
 .cf-display {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: "Barlow Condensed", "Barlow", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+  line-height: 1.05;
+}
+
+/* Kilómetros, fechas y conteos: cifras de ancho fijo para que las columnas no bailen. */
+.cf-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Etiqueta de un campo o de un bloque: en minúscula y sin espaciar, porque dice qué es
+   lo que sigue, no decora. */
+.cf-etiqueta {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cf-dim);
+  margin-bottom: 6px;
 }
 
 /* Estados de interacción. Van en CSS y no en estilos inline porque :hover y
    :focus-visible no existen como propiedades de React.CSSProperties. */
 
-:where(button, input, select, textarea, [tabindex]):focus-visible {
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--cf-accent);
   outline-offset: 2px;
 }
 
-/* Fila o item de navegación clicable: se tiñe al pasar por encima. */
+/* Fila o item clicable: se tiñe al pasar por encima. */
 .cf-tap {
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
@@ -56,37 +81,62 @@ button {
   background: var(--cf-surface-2);
 }
 
-/* Tarjeta clicable: se levanta. */
-.cf-card-tap {
+/* Botón de acción principal: tinta de timbre. */
+.cf-btn,
+.cf-btn-quieto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
-  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
 }
-.cf-card-tap:hover {
-  transform: translateY(-2px);
-  border-color: var(--cf-accent);
-  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.7);
-}
-
-/* Botón de acción principal. */
 .cf-btn {
-  border: none;
-  cursor: pointer;
+  border: 1px solid var(--cf-accent);
   background: var(--cf-accent);
   color: var(--cf-on-accent);
-  font-weight: 600;
-  transition: filter 0.15s ease, transform 0.15s ease;
 }
 .cf-btn:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
 }
-.cf-btn:active {
-  transform: translateY(1px);
+.cf-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
-.cf-input {
+/* Botón secundario: mismo tamaño, sin relleno. */
+.cf-btn-quieto {
   border: 1px solid var(--cf-border);
   background: var(--cf-surface);
   color: var(--cf-text);
+}
+.cf-btn-quieto:hover {
+  border-color: var(--cf-dim);
+}
+
+.cf-btn svg,
+.cf-btn-quieto svg {
+  flex-shrink: 0;
+  font-size: 1.15em;
+}
+
+.cf-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--cf-border);
+  border-radius: 8px;
+  background: var(--cf-surface);
+  color: var(--cf-text);
+  font: inherit;
+  font-size: 15px;
   transition: border-color 0.15s ease;
 }
 .cf-input::placeholder {
@@ -95,18 +145,48 @@ button {
 .cf-input:focus {
   outline: none;
   border-color: var(--cf-accent);
+  box-shadow: 0 0 0 3px var(--cf-accent-soft);
 }
 
-@keyframes cfpulse {
-  0%,
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.4;
-    transform: scale(0.7);
-  }
+/* Bloque con borde. Un solo radio para los bloques; los botones y la patente usan
+   radios más chicos porque son de otra jerarquía. */
+.cf-panel {
+  border: 1px solid var(--cf-border);
+  border-radius: 10px;
+  background: var(--cf-surface);
+}
+
+/* Lista de filas dentro de un solo bloque, separadas por una línea: un listado se lee
+   como una tabla, no como un montón de tarjetas sueltas. */
+.cf-lista > * + * {
+  border-top: 1px solid var(--cf-border);
+}
+
+/* La patente chilena: placa clara, tinta negra, borde y un filete interior como el de
+   la placa de verdad. Es el elemento con personalidad; todo lo demás queda sobrio. */
+.cf-patente {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  padding: 0 0.42em;
+  background: var(--cf-plate-bg);
+  color: var(--cf-plate-ink);
+  border: 1.5px solid var(--cf-plate-ink);
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1.5px var(--cf-plate-bg), inset 0 0 0 2.5px var(--cf-plate-rim);
+  font-family: "Barlow Condensed", "Barlow", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.cf-patente-punto {
+  width: 0.2em;
+  height: 0.2em;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.75;
 }
 
 ::-webkit-scrollbar {

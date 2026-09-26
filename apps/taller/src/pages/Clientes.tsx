@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { PiPlus, PiX } from "react-icons/pi";
+import { ordenDeTipos, Patente, tiposDeVehiculo } from "@cf/ui";
 import type { Client, Vehicle } from "@cf/types";
 import { api, useApi } from "../api";
 import { Cargando, ErrorApi } from "../Estado";
@@ -9,25 +11,7 @@ import { km } from "../format";
 // Sacar los formularios a archivos propios no bajaría la complejidad de nada —los usa
 // solo esta pantalla— y rompería la regla de no crear indirecciones de un solo uso.
 
-const card: React.CSSProperties = {
-  border: "1px solid var(--cf-border)",
-  borderRadius: 14,
-  background: "var(--cf-surface)",
-  padding: 16,
-};
-
-const etiqueta: React.CSSProperties = { fontSize: 11, color: "var(--cf-dim)", marginBottom: 5, fontWeight: 500 };
-const campo: React.CSSProperties = { width: "100%", borderRadius: 9, padding: "9px 11px", fontSize: 13 };
-
-const tipos: { valor: Vehicle["kind"]; label: string }[] = [
-  { valor: "auto", label: "Auto" },
-  { valor: "moto", label: "Moto" },
-  { valor: "camion", label: "Camión" },
-  { valor: "maquinaria", label: "Maquinaria" },
-];
-
 export function Clientes() {
-  const navigate = useNavigate();
   const cartera = useApi<Client[]>("/taller/clientes");
   const flota = useApi<Vehicle[]>("/taller/vehiculos");
 
@@ -52,119 +36,93 @@ export function Clientes() {
 
   return (
     <>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, marginBottom: 22 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, marginBottom: 24, flexWrap: "wrap" }}>
         <div>
-          <div className="cf-display" style={{ fontWeight: 600, fontSize: 24, marginBottom: 4 }}>
+          <h1 className="cf-display" style={{ fontSize: 40, margin: 0 }}>
             Clientes
-          </div>
-          <div style={{ fontSize: 12.5, color: "var(--cf-dim)" }}>
+          </h1>
+          <div className="cf-num" style={{ color: "var(--cf-dim)", marginTop: 6 }}>
             {clientes.length} {clientes.length === 1 ? "cliente" : "clientes"} con vehículos en seguimiento
           </div>
         </div>
-        <button
-          className="cf-btn"
-          onClick={() => setAbierto(abierto === "nuevo" ? null : "nuevo")}
-          style={{ padding: "9px 16px", borderRadius: 10, fontSize: 13, whiteSpace: "nowrap", flexShrink: 0 }}
-        >
-          {abierto === "nuevo" ? "Cancelar" : "+ Nuevo cliente"}
+        <button className={abierto === "nuevo" ? "cf-btn-quieto" : "cf-btn"} onClick={() => setAbierto(abierto === "nuevo" ? null : "nuevo")}>
+          {abierto === "nuevo" ? <PiX aria-hidden /> : <PiPlus aria-hidden />}
+          {abierto === "nuevo" ? "Cancelar" : "Nuevo cliente"}
         </button>
       </div>
 
       {abierto === "nuevo" && <FormularioCliente onListo={recargarTodo} />}
 
       {clientes.length === 0 && abierto !== "nuevo" && (
-        <div
-          style={{
-            border: "1px dashed var(--cf-border)",
-            borderRadius: 14,
-            padding: "30px 20px",
-            textAlign: "center",
-            fontSize: 13,
-            color: "var(--cf-dim)",
-            lineHeight: 1.6,
-          }}
-        >
-          Todavía no hay clientes en la cartera.
-          <br />
-          Agrega el primero con <strong style={{ color: "var(--cf-accent)" }}>+ Nuevo cliente</strong>. No necesita
-          cuenta en Car Follow para que le lleves el historial.
+        <div className="cf-panel" style={{ padding: "24px 20px", maxWidth: 560 }}>
+          <div style={{ fontWeight: 600 }}>Todavía no hay clientes en la cartera</div>
+          <p style={{ margin: "4px 0 0", color: "var(--cf-dim)" }}>
+            Agrega el primero con Nuevo cliente. No necesita cuenta en Car Follow para que le lleves el historial.
+          </p>
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 14 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 16 }}>
         {clientes.map((c) => (
-          <div key={c.id} style={card}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <div key={c.id} className="cf-panel" style={{ padding: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
               <div
+                aria-hidden
+                className="cf-display"
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 42,
+                  height: 42,
                   flexShrink: 0,
-                  borderRadius: 12,
-                  background: "var(--cf-persona-soft)",
+                  borderRadius: "50%",
+                  border: "2px solid var(--cf-persona)",
                   color: "var(--cf-persona)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontWeight: 600,
+                  fontSize: 20,
+                  fontWeight: 700,
                 }}
               >
                 {c.name.charAt(0).toUpperCase()}
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 14 }}>{c.name}</div>
-                <div className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-dim)" }}>
-                  {c.phone || "sin teléfono"} · {c.vehicleIds.length}{" "}
-                  {c.vehicleIds.length === 1 ? "vehículo" : "vehículos"}
+                <div style={{ fontWeight: 600, fontSize: 16 }}>{c.name}</div>
+                <div className="cf-num" style={{ fontSize: 14, color: "var(--cf-dim)" }}>
+                  {c.phone || "Sin teléfono"}
                 </div>
               </div>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+            <div className="cf-lista" style={{ borderTop: "1px solid var(--cf-border)", marginBottom: 12 }}>
               {c.vehicleIds.map((id) => {
                 const v = vehiculos.find((x) => x.id === id);
                 if (!v) return null;
                 return (
-                  <div
+                  <Link
                     key={id}
+                    to={`/vehiculos/${id}`}
                     className="cf-tap"
-                    role="link"
-                    tabIndex={0}
-                    onClick={() => navigate(`/vehiculos/${id}`)}
-                    onKeyDown={(e) => e.key === "Enter" && navigate(`/vehiculos/${id}`)}
-                    style={{ display: "flex", justifyContent: "space-between", gap: 10, fontSize: 12.5 }}
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 4px", color: "inherit", textDecoration: "none" }}
                   >
-                    <span>{v.name}</span>
-                    <span className="cf-mono" style={{ color: "var(--cf-dim)", whiteSpace: "nowrap" }}>
-                      {v.plate} · {km(v.odometer)} km
+                    <Patente valor={v.plate} alto={22} />
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 14.5 }}>{v.name}</span>
+                    <span className="cf-num" style={{ fontSize: 13.5, color: "var(--cf-dim)", whiteSpace: "nowrap" }}>
+                      {km(v.odometer)} km
                     </span>
-                  </div>
+                  </Link>
                 );
               })}
               {c.vehicleIds.length === 0 && (
-                <div style={{ fontSize: 12, color: "var(--cf-dim)" }}>Sin vehículos cargados todavía.</div>
+                <div style={{ padding: "10px 4px", fontSize: 14, color: "var(--cf-dim)" }}>Sin vehículos cargados todavía.</div>
               )}
             </div>
 
             {abierto === c.id ? (
-              <FormularioVehiculo clienteId={c.id} onListo={recargarTodo} />
+              <FormularioVehiculo clienteId={c.id} onListo={recargarTodo} onCancelar={() => setAbierto(null)} />
             ) : (
-              <button
-                className="cf-tap"
-                onClick={() => setAbierto(c.id)}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: 9,
-                  fontSize: 12.5,
-                  fontFamily: "inherit",
-                  border: "1px solid var(--cf-border)",
-                  background: "var(--cf-bg)",
-                  color: "var(--cf-text)",
-                  cursor: "pointer",
-                }}
-              >
-                + Vehículo
+              <button className="cf-btn-quieto" onClick={() => setAbierto(c.id)} style={{ width: "100%", height: 36 }}>
+                <PiPlus aria-hidden />
+                Agregar vehículo
               </button>
             )}
           </div>
@@ -202,46 +160,40 @@ function FormularioCliente({ onListo }: { onListo: () => void }) {
   };
 
   return (
-    <form onSubmit={enviar} style={{ ...card, marginBottom: 18, maxWidth: 460 }}>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 15, marginBottom: 14 }}>
+    <form onSubmit={enviar} className="cf-panel" style={{ padding: 20, marginBottom: 24, maxWidth: 520 }}>
+      <h2 className="cf-display" style={{ fontSize: 24, margin: "0 0 16px" }}>
         Nuevo cliente
-      </div>
+      </h2>
 
-      <div style={etiqueta}>Nombre</div>
-      <input
-        className="cf-input"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Lucía M."
-        required
-        style={{ ...campo, marginBottom: 12 }}
-      />
+      <label className="cf-etiqueta" htmlFor="cli-nombre">
+        Nombre
+      </label>
+      <input id="cli-nombre" className="cf-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Lucía M." required style={{ marginBottom: 16 }} />
 
-      <div style={etiqueta}>Teléfono (opcional)</div>
+      <label className="cf-etiqueta" htmlFor="cli-fono">
+        Teléfono (opcional)
+      </label>
       <input
-        className="cf-input cf-mono"
+        id="cli-fono"
+        className="cf-input cf-num"
+        type="tel"
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
         placeholder="+56 9 1234 5678"
-        style={{ ...campo, marginBottom: error ? 10 : 16 }}
+        style={{ marginBottom: error ? 12 : 20 }}
       />
 
       {error && (
-        <div role="alert" style={{ fontSize: 12, color: "var(--cf-danger)", marginBottom: 12 }}>
+        <div role="alert" style={{ fontSize: 14.5, color: "var(--cf-danger)", marginBottom: 14 }}>
           {error}
         </div>
       )}
 
-      <button
-        className="cf-btn"
-        type="submit"
-        disabled={enviando}
-        style={{ padding: "9px 16px", borderRadius: 10, fontSize: 13, opacity: enviando ? 0.6 : 1 }}
-      >
+      <button className="cf-btn" type="submit" disabled={enviando}>
         {enviando ? "Guardando…" : "Guardar cliente"}
       </button>
 
-      <p style={{ fontSize: 11.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: "12px 0 0" }}>
+      <p style={{ fontSize: 14, color: "var(--cf-dim)", margin: "14px 0 0" }}>
         El cliente no necesita cuenta en Car Follow para que registres su historial. Si después crea una cuenta, por
         ahora no se puede enlazar con esta ficha.
       </p>
@@ -249,7 +201,7 @@ function FormularioCliente({ onListo }: { onListo: () => void }) {
   );
 }
 
-function FormularioVehiculo({ clienteId, onListo }: { clienteId: string; onListo: () => void }) {
+function FormularioVehiculo({ clienteId, onListo, onCancelar }: { clienteId: string; onListo: () => void; onCancelar: () => void }) {
   const [name, setName] = useState("");
   const [plate, setPlate] = useState("");
   const [kind, setKind] = useState<Vehicle["kind"]>("auto");
@@ -281,75 +233,78 @@ function FormularioVehiculo({ clienteId, onListo }: { clienteId: string; onListo
   };
 
   return (
-    <form onSubmit={enviar} style={{ borderTop: "1px solid var(--cf-border)", paddingTop: 12 }}>
-      <div style={etiqueta}>Vehículo</div>
-      <input
-        className="cf-input"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Toyota Hilux"
-        required
-        style={{ ...campo, marginBottom: 10 }}
-      />
-
-      <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={etiqueta}>Patente</div>
-          <input
-            className="cf-input cf-mono"
-            value={plate}
-            onChange={(e) => setPlate(e.target.value)}
-            placeholder="ABCD12"
-            required
-            minLength={4}
-            style={campo}
-          />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={etiqueta}>Kilometraje</div>
-          <input
-            className="cf-input cf-mono"
-            value={odometer}
-            onChange={(e) => setOdometer(e.target.value)}
-            placeholder="84320"
-            style={campo}
-          />
-        </div>
+    <form onSubmit={enviar} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div role="group" aria-label="Tipo de vehículo" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+        {ordenDeTipos.map((t) => {
+          const { label, Icono } = tiposDeVehiculo[t];
+          const activo = kind === t;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setKind(t)}
+              aria-pressed={activo}
+              title={label}
+              className={activo ? undefined : "cf-tap"}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 2,
+                padding: "8px 2px",
+                borderRadius: 8,
+                font: "inherit",
+                fontSize: 12.5,
+                fontWeight: activo ? 600 : 500,
+                border: `1px solid ${activo ? "var(--cf-accent)" : "var(--cf-border)"}`,
+                background: activo ? "var(--cf-accent-soft)" : "var(--cf-surface)",
+                color: activo ? "var(--cf-accent)" : "var(--cf-text)",
+              }}
+            >
+              <Icono aria-hidden size={22} />
+              {label}
+            </button>
+          );
+        })}
       </div>
 
-      <div style={etiqueta}>Tipo</div>
-      <select
-        className="cf-input"
-        value={kind}
-        // El valor de un <select> es string: en vez de afirmar que es un kind, se busca
-        // en la lista de la que salieron las opciones. Sin `as` y sin confiar en el DOM.
-        onChange={(e) => {
-          const elegido = tipos.find((t) => t.valor === e.target.value);
-          if (elegido) setKind(elegido.valor);
-        }}
-        style={{ ...campo, marginBottom: error ? 10 : 12 }}
-      >
-        {tipos.map((t) => (
-          <option key={t.valor} value={t.valor}>
-            {t.label}
-          </option>
-        ))}
-      </select>
+      <input className="cf-input" aria-label="Vehículo" value={name} onChange={(e) => setName(e.target.value)} placeholder="Vehículo, por ejemplo Toyota Hilux" required />
+
+      <div style={{ display: "flex", gap: 8 }}>
+        <input
+          className="cf-input cf-display"
+          aria-label="Patente"
+          value={plate}
+          onChange={(e) => setPlate(e.target.value.toUpperCase())}
+          placeholder="Patente"
+          required
+          minLength={4}
+          style={{ fontSize: 18, fontWeight: 700, letterSpacing: "0.06em" }}
+        />
+        <input
+          className="cf-input cf-num"
+          aria-label="Kilometraje"
+          inputMode="numeric"
+          value={odometer}
+          onChange={(e) => setOdometer(e.target.value)}
+          placeholder="Kilometraje"
+        />
+      </div>
 
       {error && (
-        <div role="alert" style={{ fontSize: 12, color: "var(--cf-danger)", marginBottom: 10 }}>
+        <div role="alert" style={{ fontSize: 14, color: "var(--cf-danger)" }}>
           {error}
         </div>
       )}
 
-      <button
-        className="cf-btn"
-        type="submit"
-        disabled={enviando}
-        style={{ width: "100%", padding: "9px 14px", borderRadius: 9, fontSize: 12.5, opacity: enviando ? 0.6 : 1 }}
-      >
-        {enviando ? "Guardando…" : "Guardar vehículo"}
-      </button>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button className="cf-btn" type="submit" disabled={enviando} style={{ flex: 1 }}>
+          {enviando ? "Guardando…" : "Guardar vehículo"}
+        </button>
+        <button type="button" className="cf-btn-quieto" onClick={onCancelar}>
+          Cancelar
+        </button>
+      </div>
     </form>
   );
 }

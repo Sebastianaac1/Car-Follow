@@ -1,17 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { useSearchParams } from "react-router-dom";
-import { AuthorPill } from "@cf/ui";
+import { Link, useSearchParams } from "react-router-dom";
+import { AuthorPill, Patente } from "@cf/ui";
 import type { MaintenanceRecord, Vehicle } from "@cf/types";
 import { api, useApi } from "../api";
 import { Cargando, ErrorApi } from "../Estado";
 import { formatDate, km } from "../format";
-
-// Pasa las 200 líneas a propósito: el formulario y la lista que se actualiza al guardar
-// son la misma pantalla. Separarlos obligaría a subir el estado a un padre que no hace
-// nada más que sostenerlo.
-
-const label: React.CSSProperties = { fontSize: 11, color: "var(--cf-dim)", marginBottom: 6, fontWeight: 500 };
-const input: React.CSSProperties = { borderRadius: 10, padding: "10px 12px", fontSize: 13, width: "100%" };
 
 export function Trabajos() {
   const flota = useApi<Vehicle[]>("/taller/vehiculos");
@@ -22,7 +15,7 @@ export function Trabajos() {
   const desdeFicha = params.get("vehiculo");
 
   const [vehicleId, setVehicleId] = useState<string | null>(null);
-  const [title, setTitle] = useState("Cambio de aceite + filtro");
+  const [title, setTitle] = useState("Cambio de aceite y filtro");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [odometer, setOdometer] = useState("");
   const [partsText, setPartsText] = useState("");
@@ -39,24 +32,14 @@ export function Trabajos() {
   if (vehiculos.length === 0) {
     return (
       <>
-        <div className="cf-display" style={{ fontWeight: 600, fontSize: 24, marginBottom: 4 }}>
+        <h1 className="cf-display" style={{ fontSize: 40, margin: "0 0 20px" }}>
           Trabajos
-        </div>
-        <div
-          style={{
-            border: "1px dashed var(--cf-border)",
-            borderRadius: 14,
-            padding: "30px 20px",
-            marginTop: 18,
-            textAlign: "center",
-            fontSize: 13,
-            color: "var(--cf-dim)",
-            lineHeight: 1.6,
-          }}
-        >
-          No hay vehículos en seguimiento, así que no hay dónde registrar un trabajo.
-          <br />
-          Agrega un cliente y su vehículo en <strong style={{ color: "var(--cf-accent)" }}>Clientes</strong>.
+        </h1>
+        <div className="cf-panel" style={{ padding: "24px 20px", maxWidth: 560 }}>
+          <div style={{ fontWeight: 600 }}>Todavía no hay vehículos en seguimiento</div>
+          <p style={{ margin: "4px 0 0", color: "var(--cf-dim)" }}>
+            Para registrar un trabajo, agrega un cliente y su vehículo en <Link to="/clientes">Clientes</Link>.
+          </p>
         </div>
       </>
     );
@@ -99,141 +82,110 @@ export function Trabajos() {
 
   return (
     <>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 24, marginBottom: 4 }}>
+      <h1 className="cf-display" style={{ fontSize: 40, margin: 0 }}>
         Trabajos
-      </div>
-      <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginBottom: 22 }}>
+      </h1>
+      <p style={{ color: "var(--cf-dim)", margin: "6px 0 24px" }}>
         Registra un trabajo. Queda firmado por el taller en el historial del vehículo y el dueño lo ve en su app.
-      </div>
+      </p>
 
-      <div style={{ display: "flex", gap: 22, alignItems: "flex-start", flexWrap: "wrap" }}>
-        <form
-          onSubmit={guardar}
-          style={{
-            flex: "1 1 320px",
-            border: "1px solid var(--cf-border)",
-            borderRadius: 16,
-            background: "var(--cf-surface)",
-            padding: 20,
-          }}
-        >
-          <div className="cf-display" style={{ fontWeight: 600, fontSize: 16, marginBottom: 16 }}>
+      <div style={{ display: "flex", gap: 28, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <form onSubmit={guardar} className="cf-panel" style={{ flex: "1 1 340px", padding: 22, position: "sticky", top: 24 }}>
+          <h2 className="cf-display" style={{ fontSize: 24, margin: "0 0 18px" }}>
             Registrar trabajo
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-              <div style={label}>Vehículo</div>
-              <select className="cf-input" value={elegido} onChange={(e) => setVehicleId(e.target.value)} style={input}>
+              <label className="cf-etiqueta" htmlFor="tr-vehiculo">
+                Vehículo
+              </label>
+              <select id="tr-vehiculo" className="cf-input" value={elegido} onChange={(e) => setVehicleId(e.target.value)}>
                 {vehiculos.map((v) => (
                   <option key={v.id} value={v.id}>
-                    {v.name} · {v.plate} · {v.ownerName}
+                    {v.plate}, {v.name} ({v.ownerName})
                   </option>
                 ))}
               </select>
             </div>
             <div>
-              <div style={label}>Trabajo / servicio</div>
-              <input
-                className="cf-input"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-                style={input}
-              />
+              <label className="cf-etiqueta" htmlFor="tr-titulo">
+                Trabajo o servicio
+              </label>
+              <input id="tr-titulo" className="cf-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
             <div style={{ display: "flex", gap: 12 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={label}>Fecha</div>
-                <input
-                  className="cf-input"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  required
-                  style={input}
-                />
+                <label className="cf-etiqueta" htmlFor="tr-fecha">
+                  Fecha
+                </label>
+                <input id="tr-fecha" className="cf-input cf-num" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={label}>Kilometraje</div>
+                <label className="cf-etiqueta" htmlFor="tr-km">
+                  Kilometraje
+                </label>
                 <input
-                  className="cf-input cf-mono"
+                  id="tr-km"
+                  className="cf-input cf-num"
+                  inputMode="numeric"
                   value={odometer}
                   onChange={(e) => setOdometer(e.target.value)}
                   placeholder="92000"
-                  style={input}
                 />
               </div>
             </div>
             <div>
-              <div style={label}>Piezas (separadas por coma)</div>
+              <label className="cf-etiqueta" htmlFor="tr-piezas">
+                Piezas, separadas por coma
+              </label>
               <input
+                id="tr-piezas"
                 className="cf-input"
                 value={partsText}
                 onChange={(e) => setPartsText(e.target.value)}
-                placeholder="Aceite 5W-30, Filtro aceite"
-                style={input}
+                placeholder="Aceite 5W-30, filtro de aceite"
               />
             </div>
 
             {error && (
-              <div role="alert" style={{ fontSize: 12.5, color: "var(--cf-danger)", lineHeight: 1.45 }}>
+              <div role="alert" style={{ fontSize: 14.5, color: "var(--cf-danger)" }}>
                 {error}
               </div>
             )}
 
-            <button
-              className="cf-btn"
-              type="submit"
-              disabled={guardando}
-              style={{ height: 44, borderRadius: 12, fontSize: 14, opacity: guardando ? 0.6 : 1 }}
-            >
+            <button className="cf-btn" type="submit" disabled={guardando} style={{ height: 46 }}>
               {guardando ? "Guardando…" : "Guardar trabajo"}
             </button>
           </div>
         </form>
 
-        <div style={{ flex: "1.1 1 320px", minWidth: 0 }}>
-          <div
-            className="cf-mono"
-            style={{
-              fontSize: 10.5,
-              letterSpacing: 0.5,
-              textTransform: "uppercase",
-              color: "var(--cf-dim)",
-              marginBottom: 10,
-            }}
-          >
+        <section style={{ flex: "1.2 1 380px", minWidth: 0 }}>
+          <h2 className="cf-display" style={{ fontSize: 24, margin: "0 0 12px" }}>
             Trabajos recientes
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {trabajos.map((r) => {
-              const v = vehiculos.find((x) => x.id === r.vehicleId);
-              return (
-                <div
-                  key={r.id}
-                  style={{ border: "1px solid var(--cf-border)", borderRadius: 14, background: "var(--cf-surface)", padding: 14 }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, marginBottom: 6 }}>
-                    <span style={{ fontWeight: 600, fontSize: 14 }}>{r.title}</span>
-                    <span className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)", whiteSpace: "nowrap" }}>
-                      {v?.name ?? "—"}
-                    </span>
+          </h2>
+          {trabajos.length === 0 ? (
+            <p style={{ color: "var(--cf-dim)" }}>Todavía no hay trabajos registrados en la cartera.</p>
+          ) : (
+            <div className="cf-panel cf-lista">
+              {trabajos.map((r) => {
+                const v = vehiculos.find((x) => x.id === r.vehicleId);
+                return (
+                  <div key={r.id} style={{ padding: "14px 16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 600 }}>{r.title}</span>
+                      {v && <Patente valor={v.plate} alto={22} />}
+                    </div>
+                    <div className="cf-num" style={{ fontSize: 14, color: "var(--cf-dim)", marginBottom: 8 }}>
+                      {v?.name ?? "Vehículo"}, {formatDate(r.date)}, {km(r.odometer)} km
+                      {r.parts.length > 0 && `. Piezas: ${r.parts.join(", ")}`}
+                    </div>
+                    <AuthorPill role={r.author.role} name={r.author.name} />
                   </div>
-                  <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)", marginBottom: 8 }}>
-                    {formatDate(r.date)} · {km(r.odometer)} km
-                    {r.parts.length > 0 && ` · ${r.parts.join(", ")}`}
-                  </div>
-                  <AuthorPill role={r.author.role} name={r.author.name} />
-                </div>
-              );
-            })}
-            {trabajos.length === 0 && (
-              <div style={{ fontSize: 12.5, color: "var(--cf-dim)", padding: "18px 2px" }}>
-                Todavía no hay trabajos registrados en la cartera.
-              </div>
-            )}
-          </div>
-        </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
     </>
   );

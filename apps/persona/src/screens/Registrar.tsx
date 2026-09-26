@@ -1,35 +1,28 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { PiInfo, PiX } from "react-icons/pi";
 import type { Vehicle } from "@cf/types";
 import { api, useApi } from "../api";
 import { Cargando, ErrorApi } from "../Estado";
 
-const labelStyle: React.CSSProperties = { fontSize: 11, color: "var(--cf-dim)", marginBottom: 6, fontWeight: 500 };
-const inputStyle: React.CSSProperties = {
-  border: "1px solid var(--cf-border)",
-  borderRadius: 11,
-  padding: "11px 13px",
-  background: "var(--cf-surface)",
-  fontSize: 13.5,
-  color: "var(--cf-text)",
-  width: "100%",
-  fontFamily: "'IBM Plex Mono', monospace",
-};
+// Pasa las 200 líneas a propósito: es un solo formulario de seis campos y lo que lo
+// alarga son los estilos inline de cada uno, no lógica que se pueda separar.
 
 function chip(on: boolean): React.CSSProperties {
   return {
-    padding: "8px 13px",
-    borderRadius: 10,
+    height: 36,
+    padding: "0 14px",
+    borderRadius: 8,
+    font: "inherit",
+    fontSize: 14.5,
+    fontWeight: on ? 600 : 500,
     border: `1px solid ${on ? "var(--cf-accent)" : "var(--cf-border)"}`,
-    fontSize: 12.5,
-    color: on ? "var(--cf-accent)" : "var(--cf-dim)",
-    fontWeight: on ? 600 : 400,
     background: on ? "var(--cf-accent-soft)" : "var(--cf-surface)",
-    cursor: "pointer",
+    color: on ? "var(--cf-accent)" : "var(--cf-text)",
   };
 }
 
-const services = ["Aceite motor", "Frenos", "Filtros", "+ otro"];
+const services = ["Aceite motor", "Frenos", "Filtros", "Otro"];
 
 export function Registrar() {
   const navigate = useNavigate();
@@ -59,11 +52,7 @@ export function Registrar() {
 
   const mine = flota.datos ?? [];
   if (mine.length === 0) {
-    return (
-      <div style={{ padding: 20, fontSize: 13, color: "var(--cf-dim)", lineHeight: 1.5 }}>
-        Necesitas al menos un vehículo para registrar una mantención.
-      </div>
-    );
+    return <p style={{ color: "var(--cf-dim)" }}>Necesitas al menos un vehículo para registrar una mantención.</p>;
   }
 
   const elegido = vehicleId ?? mine[0].id;
@@ -79,7 +68,7 @@ export function Registrar() {
       await api(`/vehiculos/${elegido}/mantenciones`, {
         metodo: "POST",
         cuerpo: {
-          title: service === "+ otro" ? "Mantención" : service,
+          title: service === "Otro" ? "Mantención" : service,
           date,
           odometer: Number(odometer.replace(/\./g, "")) || 0,
           place,
@@ -94,124 +83,131 @@ export function Registrar() {
   };
 
   return (
-    <div style={{ maxWidth: 460 }}>
-      <div style={{ padding: "14px 20px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-          <span onClick={() => navigate("/")} style={{ fontSize: 18, cursor: "pointer" }}>
-            ✕
-          </span>
-          <span className="cf-display" style={{ fontWeight: 600, fontSize: 18 }}>
-            Registrar mantención
-          </span>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div>
-            <div style={labelStyle}>Vehículo</div>
-            <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-              {mine.map((v) => (
-                <span key={v.id} onClick={() => setVehicleId(v.id)} style={chip(elegido === v.id)}>
-                  {v.name}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div style={labelStyle}>Pieza / servicio</div>
-            <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
-              {services.map((s) => (
-                <span key={s} onClick={() => setService(s)} style={chip(service === s)}>
-                  {s}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <div style={labelStyle}>Fecha</div>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inputStyle} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={labelStyle}>Kilometraje</div>
-              <input value={odometer} onChange={(e) => setOdometer(e.target.value)} style={inputStyle} />
-            </div>
-          </div>
-
-          <div>
-            <div style={labelStyle}>Lugar</div>
-            <div style={{ display: "flex", gap: 7 }}>
-              <span onClick={() => setPlace("taller")} style={chip(place === "taller")}>
-                Taller
-              </span>
-              <span onClick={() => setPlace("particular")} style={chip(place === "particular")}>
-                Particular / yo mismo
-              </span>
-            </div>
-          </div>
-
-          <div>
-            <div style={labelStyle}>Piezas cambiadas</div>
-            <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center" }}>
-              {parts.map((p) => (
-                <span
-                  key={p}
-                  onClick={() => removePart(p)}
-                  className="cf-mono"
-                  style={{
-                    padding: "7px 11px",
-                    borderRadius: 9,
-                    background: "var(--cf-surface-2)",
-                    fontSize: 12,
-                    cursor: "pointer",
-                  }}
-                >
-                  {p} ✕
-                </span>
-              ))}
-              <input
-                value={newPart}
-                onChange={(e) => setNewPart(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addPart()}
-                placeholder="+ pieza"
-                style={{ ...inputStyle, width: 96, padding: "7px 11px", fontSize: 12 }}
-              />
-            </div>
-          </div>
-
-          {/* Acá había un bloque "Programar próximo cambio" con los intervalos. Se fue:
-              los intervalos ahora viven en las reglas de cada vehículo, no en el trabajo
-              que se registra, y el vehículo ya nace con las de su tipo. Editarlas es la
-              pantalla de reglas, que todavía es de solo lectura. */}
-          <div className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-dim)", lineHeight: 1.5 }}>
-            → el próximo aviso sale solo, desde las reglas de este vehículo
-          </div>
-        </div>
+    <div style={{ maxWidth: 560 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 24 }}>
+        <h1 className="cf-display" style={{ fontSize: 36, margin: 0 }}>
+          Registrar mantención
+        </h1>
+        <button className="cf-btn-quieto" onClick={() => navigate("/")} aria-label="Cerrar" style={{ width: 40, padding: 0 }}>
+          <PiX aria-hidden />
+        </button>
       </div>
 
-      <div style={{ padding: "0 20px 20px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div>
+          <span className="cf-etiqueta">Vehículo</span>
+          <div role="group" aria-label="Vehículo" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {mine.map((v) => (
+              <button key={v.id} onClick={() => setVehicleId(v.id)} aria-pressed={elegido === v.id} style={chip(elegido === v.id)}>
+                {v.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <span className="cf-etiqueta">Pieza o servicio</span>
+          <div role="group" aria-label="Pieza o servicio" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {services.map((s) => (
+              <button key={s} onClick={() => setService(s)} aria-pressed={service === s} style={chip(service === s)}>
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 12 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <label className="cf-etiqueta" htmlFor="rm-fecha">
+              Fecha
+            </label>
+            <input id="rm-fecha" className="cf-input cf-num" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <label className="cf-etiqueta" htmlFor="rm-km">
+              Kilometraje
+            </label>
+            <input
+              id="rm-km"
+              className="cf-input cf-num"
+              inputMode="numeric"
+              value={odometer}
+              onChange={(e) => setOdometer(e.target.value)}
+              placeholder="84500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <span className="cf-etiqueta">Dónde se hizo</span>
+          <div role="group" aria-label="Dónde se hizo" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button onClick={() => setPlace("taller")} aria-pressed={place === "taller"} style={chip(place === "taller")}>
+              En un taller
+            </button>
+            <button onClick={() => setPlace("particular")} aria-pressed={place === "particular"} style={chip(place === "particular")}>
+              Lo hice yo
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="cf-etiqueta" htmlFor="rm-pieza">
+            Piezas cambiadas
+          </label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+            {parts.map((p) => (
+              <span
+                key={p}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  height: 34,
+                  padding: "0 4px 0 12px",
+                  borderRadius: 8,
+                  background: "var(--cf-surface-2)",
+                  fontSize: 14.5,
+                }}
+              >
+                {p}
+                <button
+                  onClick={() => removePart(p)}
+                  aria-label={`Quitar ${p}`}
+                  className="cf-tap"
+                  style={{ display: "flex", padding: 6, border: "none", borderRadius: 6, background: "none", color: "var(--cf-dim)" }}
+                >
+                  <PiX aria-hidden />
+                </button>
+              </span>
+            ))}
+            <input
+              id="rm-pieza"
+              className="cf-input"
+              value={newPart}
+              onChange={(e) => setNewPart(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addPart()}
+              onBlur={addPart}
+              placeholder="Escribe una pieza y Enter"
+              style={{ width: 230, height: 34 }}
+            />
+          </div>
+        </div>
+
+        {/* Acá había un bloque "Programar próximo cambio" con los intervalos. Se fue:
+            los intervalos ahora viven en las reglas de cada vehículo, no en el trabajo
+            que se registra, y el vehículo ya nace con las de su tipo. Editarlas es la
+            pantalla de reglas, que todavía es de solo lectura. */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 14, color: "var(--cf-dim)" }}>
+          <PiInfo aria-hidden size={18} style={{ flexShrink: 0 }} />
+          El próximo aviso se calcula solo, con las reglas de este vehículo.
+        </div>
+
         {errorGuardar && (
-          <div role="alert" style={{ fontSize: 12, color: "var(--cf-danger)", marginBottom: 10, lineHeight: 1.45 }}>
+          <div role="alert" style={{ fontSize: 14.5, color: "var(--cf-danger)" }}>
             {errorGuardar}
           </div>
         )}
-        <button
-          onClick={save}
-          disabled={guardando}
-          style={{
-            width: "100%",
-            height: 48,
-            borderRadius: 14,
-            border: "none",
-            background: "var(--cf-accent)",
-            color: "var(--cf-on-accent)",
-            fontWeight: 600,
-            fontSize: 15,
-            cursor: guardando ? "default" : "pointer",
-            opacity: guardando ? 0.6 : 1,
-          }}
-        >
+        <button className="cf-btn" onClick={save} disabled={guardando} style={{ width: "100%", height: 48 }}>
           {guardando ? "Guardando…" : "Guardar mantención"}
         </button>
       </div>

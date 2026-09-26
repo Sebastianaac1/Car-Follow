@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { PiCar, PiWrench } from "react-icons/pi";
+import type { IconType } from "react-icons";
 import { Logo, ThemeToggle } from "@cf/ui";
 import type { Account } from "@cf/types";
 import { api } from "../api";
@@ -8,20 +10,19 @@ import { useSesion } from "../sesion";
 /** El panel del taller corre en su propio dominio. */
 const URL_TALLER = import.meta.env.VITE_URL_TALLER ?? "http://localhost:5174";
 
+// Pasa las 200 líneas a propósito: es un formulario con sus dos variantes de tipo de
+// cuenta. No hay lógica que extraer, solo campos.
+
 /* Duplicado a propósito con Login.tsx: son dos pantallas parecidas, no la
-   misma. Regla de tres — se extrae al tercer uso, no antes. */
-const etiqueta: React.CSSProperties = { fontSize: 11, color: "var(--cf-dim)", marginBottom: 5, fontWeight: 500 };
-const campo: React.CSSProperties = { width: "100%", borderRadius: 10, padding: "11px 13px", fontSize: 13.5 };
-/* Antes esta pantalla ocupaba el alto del marco de teléfono; ahora es una página web y
-   se centra sola en la ventana. */
+   misma. Regla de tres: se extrae al tercer uso, no antes. */
 const marco: React.CSSProperties = {
   minHeight: "100vh",
-  background: "radial-gradient(760px 420px at 50% -10%, var(--cf-accent-soft), transparent 70%), var(--cf-bg)",
-  color: "var(--cf-text)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  padding: 24,
+  padding: "72px 20px 40px",
+  background: "var(--cf-bg)",
+  color: "var(--cf-text)",
 };
 
 type Tipo = "persona" | "taller";
@@ -68,125 +69,103 @@ export function Registro() {
 
   return (
     <div style={marco}>
-      <div style={{ position: "absolute", top: 24, right: 24 }}>
+      <div style={{ position: "absolute", top: 20, right: 20 }}>
         <ThemeToggle />
       </div>
-      <form
-        onSubmit={enviar}
-        style={{
-          width: "100%",
-          maxWidth: 380,
-          border: "1px solid var(--cf-border)",
-          borderRadius: 18,
-          background: "var(--cf-surface)",
-          padding: 28,
-        }}
-      >
-      <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 22 }}>
-        <Logo size={38} radius={11} font={15} />
-        <div>
-          <div className="cf-display" style={{ fontWeight: 700, fontSize: 17, lineHeight: 1 }}>
+      <form onSubmit={enviar} className="cf-panel" style={{ width: "100%", maxWidth: 400, padding: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+          <Logo size={40} />
+          <div className="cf-display" style={{ fontSize: 28, fontWeight: 700 }}>
             Crear cuenta
           </div>
-          <div className="cf-mono" style={{ fontSize: 10, color: "var(--cf-accent)", marginTop: 4 }}>
-            Car Follow
-          </div>
         </div>
-      </div>
 
-      <div style={etiqueta}>Tipo de cuenta</div>
-      <div style={{ display: "flex", gap: 7, marginBottom: 16 }}>
-        <Opcion
-          label="Persona"
-          detalle="Dueño de vehículo"
-          activo={tipo === "persona"}
-          onClick={() => {
-            setTipo("persona");
-            setError(null);
-          }}
-        />
-        <Opcion label="Taller" detalle="Panel del negocio" activo={tipo === "taller"} onClick={() => setTipo("taller")} />
-      </div>
-
-      {tipo === "taller" ? (
-        <div
-          style={{
-            fontSize: 12,
-            lineHeight: 1.5,
-            color: "var(--cf-dim)",
-            border: "1px solid var(--cf-border)",
-            borderRadius: 10,
-            padding: "11px 12px",
-            marginBottom: 16,
-          }}
-        >
-          Las cuentas de taller se crean desde el panel web. Al continuar te llevamos allá.
-        </div>
-      ) : (
-        <>
-          <div style={etiqueta}>Nombre</div>
-          <input
-            className="cf-input"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            placeholder="Tu nombre"
-            required
-            style={{ ...campo, marginBottom: 12 }}
-          />
-
-          <div style={etiqueta}>Correo</div>
-          <input
-            className="cf-input"
-            type="email"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
+        <span className="cf-etiqueta">Tipo de cuenta</span>
+        <div role="group" aria-label="Tipo de cuenta" style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+          <Opcion
+            label="Persona"
+            detalle="Tengo un vehículo"
+            Icono={PiCar}
+            activo={tipo === "persona"}
+            onClick={() => {
+              setTipo("persona");
               setError(null);
             }}
-            autoComplete="username"
-            required
-            style={{ ...campo, marginBottom: 12 }}
           />
-
-          <div style={etiqueta}>Contraseña</div>
-          <input
-            className="cf-input"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="new-password"
-            required
-            minLength={8}
-            placeholder="mínimo 8 caracteres"
-            style={{ ...campo, marginBottom: error ? 11 : 16 }}
-          />
-        </>
-      )}
-
-      {error && (
-        <div role="alert" style={{ fontSize: 12, color: "var(--cf-danger)", marginBottom: 13 }}>
-          {error}
+          <Opcion label="Taller" detalle="Tengo un taller" Icono={PiWrench} activo={tipo === "taller"} onClick={() => setTipo("taller")} />
         </div>
-      )}
 
-      <button
-        className="cf-btn"
-        type="submit"
-        disabled={enviando}
-        style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14, opacity: enviando ? 0.6 : 1 }}
-      >
-        {tipo === "taller" ? "Ir al panel del taller →" : enviando ? "Creando…" : "Crear cuenta"}
-      </button>
+        {tipo === "taller" ? (
+          <p className="cf-panel" style={{ margin: "0 0 20px", padding: "12px 14px", fontSize: 14.5, color: "var(--cf-dim)" }}>
+            Las cuentas de taller se crean desde el panel web. Al continuar te llevamos allá.
+          </p>
+        ) : (
+          <>
+            <label className="cf-etiqueta" htmlFor="reg-nombre">
+              Nombre
+            </label>
+            <input
+              id="reg-nombre"
+              className="cf-input"
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              placeholder="Tu nombre"
+              required
+              style={{ marginBottom: 16 }}
+            />
 
-      <div style={{ fontSize: 12, color: "var(--cf-dim)", marginTop: 14 }}>
-        ¿Ya tienes cuenta? <Link to="/login">Entrar</Link>
-      </div>
+            <label className="cf-etiqueta" htmlFor="reg-correo">
+              Correo
+            </label>
+            <input
+              id="reg-correo"
+              className="cf-input"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError(null);
+              }}
+              autoComplete="username"
+              required
+              style={{ marginBottom: 16 }}
+            />
 
-      <div style={{ flex: 1, minHeight: 14 }} />
+            <label className="cf-etiqueta" htmlFor="reg-clave">
+              Contraseña
+            </label>
+            <input
+              id="reg-clave"
+              className="cf-input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              required
+              minLength={8}
+              placeholder="Mínimo 8 caracteres"
+              style={{ marginBottom: error ? 12 : 20 }}
+            />
+          </>
+        )}
 
-      <p style={{ fontSize: 10.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: 0 }}>
-        Tu contraseña nunca se guarda tal cual. Solo queda una versión que no se puede revertir.
-      </p>
+        {error && (
+          <div role="alert" style={{ fontSize: 14.5, color: "var(--cf-danger)", marginBottom: 14 }}>
+            {error}
+          </div>
+        )}
+
+        <button className="cf-btn" type="submit" disabled={enviando} style={{ width: "100%", height: 46 }}>
+          {tipo === "taller" ? "Ir al panel del taller" : enviando ? "Creando…" : "Crear cuenta"}
+        </button>
+
+        <div style={{ fontSize: 14.5, color: "var(--cf-dim)", marginTop: 18 }}>
+          ¿Ya tienes cuenta? <Link to="/login">Entrar</Link>
+        </div>
+
+        <p style={{ fontSize: 13.5, color: "var(--cf-dim)", margin: "14px 0 0" }}>
+          Tu contraseña nunca se guarda tal cual. Solo queda una versión que no se puede revertir.
+        </p>
       </form>
     </div>
   );
@@ -195,11 +174,13 @@ export function Registro() {
 function Opcion({
   label,
   detalle,
+  Icono,
   activo,
   onClick,
 }: {
   label: string;
   detalle: string;
+  Icono: IconType;
   activo: boolean;
   onClick: () => void;
 }) {
@@ -208,22 +189,25 @@ function Opcion({
       type="button"
       onClick={onClick}
       aria-pressed={activo}
-      className="cf-tap"
+      className={activo ? undefined : "cf-tap"}
       style={{
         flex: 1,
-        padding: "9px 11px",
-        borderRadius: 10,
-        fontFamily: "inherit",
-        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "10px 12px",
+        borderRadius: 8,
+        font: "inherit",
         textAlign: "left",
         border: `1px solid ${activo ? "var(--cf-accent)" : "var(--cf-border)"}`,
-        background: activo ? "var(--cf-accent-soft)" : "transparent",
-        color: activo ? "var(--cf-accent)" : "var(--cf-dim)",
+        background: activo ? "var(--cf-accent-soft)" : "var(--cf-surface)",
+        color: activo ? "var(--cf-accent)" : "var(--cf-text)",
       }}
     >
-      <span style={{ display: "block", fontSize: 12.5, fontWeight: 600 }}>{label}</span>
-      <span className="cf-mono" style={{ display: "block", fontSize: 9.5, marginTop: 2, opacity: 0.85 }}>
-        {detalle}
+      <Icono aria-hidden size={22} style={{ flexShrink: 0 }} />
+      <span>
+        <span style={{ display: "block", fontSize: 15, fontWeight: 600 }}>{label}</span>
+        <span style={{ display: "block", fontSize: 13, color: activo ? "inherit" : "var(--cf-dim)" }}>{detalle}</span>
       </span>
     </button>
   );

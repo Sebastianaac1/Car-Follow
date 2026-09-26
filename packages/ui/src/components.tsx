@@ -1,41 +1,85 @@
-import type { CSSProperties, ReactNode } from "react";
+import { Fragment, type CSSProperties } from "react";
+import {
+  PiBulldozer,
+  PiCar,
+  PiCheckBold,
+  PiClockBold,
+  PiMoon,
+  PiMotorcycle,
+  PiStamp,
+  PiSun,
+  PiTruck,
+  PiWarningBold,
+} from "react-icons/pi";
+import type { IconType } from "react-icons";
+import type { VehicleKind } from "@cf/types";
 import { useTheme } from "./ThemeProvider";
 
 type Status = "ok" | "pronto" | "vencido";
 
-export const statusMeta: Record<Status, { label: string; color: string; soft: string }> = {
-  ok: { label: "Al día", color: "var(--cf-ok)", soft: "var(--cf-ok-soft)" },
-  pronto: { label: "Pronto", color: "var(--cf-warn)", soft: "var(--cf-warn-soft)" },
-  vencido: { label: "Vencido", color: "var(--cf-danger)", soft: "var(--cf-danger-soft)" },
+const statusMeta: Record<Status, { label: string; color: string; soft: string; Icono: IconType }> = {
+  ok: { label: "Al día", color: "var(--cf-ok)", soft: "var(--cf-ok-soft)", Icono: PiCheckBold },
+  pronto: { label: "Pronto", color: "var(--cf-warn)", soft: "var(--cf-warn-soft)", Icono: PiClockBold },
+  vencido: { label: "Vencido", color: "var(--cf-danger)", soft: "var(--cf-danger-soft)", Icono: PiWarningBold },
 };
 
-export function Logo({ size = 64, radius = 18, font = 26 }: { size?: number; radius?: number; font?: number }) {
+/**
+ * Los cuatro tipos de vehículo con su nombre y su ícono. Estaban copiados en cinco
+ * pantallas entre las dos apps; el orden de la lista es el de los formularios.
+ */
+export const tiposDeVehiculo = {
+  auto: { label: "Auto", Icono: PiCar },
+  moto: { label: "Moto", Icono: PiMotorcycle },
+  camion: { label: "Camión", Icono: PiTruck },
+  maquinaria: { label: "Maquinaria", Icono: PiBulldozer },
+} satisfies Record<VehicleKind, { label: string; Icono: IconType }>;
+
+export const ordenDeTipos: VehicleKind[] = ["auto", "moto", "camion", "maquinaria"];
+
+/** La marca: las iniciales en tinta de timbre, sin degradado ni resplandor. */
+export function Logo({ size = 36 }: { size?: number }) {
   return (
-    <div
+    <span
+      aria-hidden
+      className="cf-display"
       style={{
         width: size,
         height: size,
-        borderRadius: radius,
-        background: "linear-gradient(150deg, var(--cf-accent), color-mix(in srgb, var(--cf-accent) 72%, #b91c1c))",
-        display: "flex",
+        borderRadius: 6,
+        background: "var(--cf-accent)",
+        color: "var(--cf-on-accent)",
+        display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        boxShadow: `0 ${Math.round(size / 5)}px ${Math.round(size / 2)}px -${Math.round(size / 5)}px rgba(249,115,22,.55)`,
+        fontWeight: 700,
+        fontSize: size * 0.5,
+        letterSpacing: 0.5,
         flexShrink: 0,
       }}
     >
-      <span
-        className="cf-display"
-        style={{ fontWeight: 700, fontSize: font, color: "var(--cf-on-accent)", letterSpacing: "-.5px" }}
-      >
-        CF
-      </span>
-    </div>
+      CF
+    </span>
   );
 }
 
-const sunPath = "M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4";
-const moonPath = "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8";
+/**
+ * La patente como se ve en la placa: de a pares con un punto al medio ("BB·CL·12").
+ * Si no tiene los 6 caracteres de una patente chilena se muestra tal cual.
+ */
+export function Patente({ valor, alto = 24 }: { valor: string; alto?: number }) {
+  const limpio = valor.replace(/[^a-z0-9]/gi, "").toUpperCase();
+  const pares = limpio.length === 6 ? [limpio.slice(0, 2), limpio.slice(2, 4), limpio.slice(4)] : [limpio];
+  return (
+    <span className="cf-patente" style={{ height: alto, fontSize: Math.round(alto * 0.7) }}>
+      {pares.map((par, i) => (
+        <Fragment key={i}>
+          {i > 0 && <span className="cf-patente-punto" aria-hidden />}
+          {par}
+        </Fragment>
+      ))}
+    </span>
+  );
+}
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
@@ -43,113 +87,94 @@ export function ThemeToggle() {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    width: 30,
-    height: 26,
-    borderRadius: 7,
+    width: 32,
+    height: 28,
+    borderRadius: 6,
     cursor: "pointer",
     border: "none",
-    background: on ? "var(--cf-accent)" : "transparent",
-    color: on ? "var(--cf-on-accent)" : "var(--cf-dim)",
-    transition: "background .15s ease, color .15s ease",
+    fontSize: 16,
+    background: on ? "var(--cf-surface)" : "transparent",
+    color: on ? "var(--cf-text)" : "var(--cf-dim)",
+    boxShadow: on ? "0 0 0 1px var(--cf-border)" : "none",
   });
-  const icon = (d: string) => (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
-      strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d={d} />
-    </svg>
-  );
   return (
     <div
       role="group"
       aria-label="Tema"
-      style={{
-        display: "inline-flex",
-        gap: 3,
-        padding: 3,
-        border: "1px solid var(--cf-border)",
-        borderRadius: 10,
-        background: "var(--cf-bg)",
-      }}
+      style={{ display: "inline-flex", gap: 2, padding: 2, borderRadius: 8, background: "var(--cf-surface-2)" }}
     >
-      <button onClick={() => setTheme("dark")} style={seg(theme === "dark")} aria-label="Tema oscuro" aria-pressed={theme === "dark"}>
-        {icon(moonPath)}
-      </button>
       <button onClick={() => setTheme("light")} style={seg(theme === "light")} aria-label="Tema claro" aria-pressed={theme === "light"}>
-        {icon(sunPath)}
+        <PiSun aria-hidden />
+      </button>
+      <button onClick={() => setTheme("dark")} style={seg(theme === "dark")} aria-label="Tema oscuro" aria-pressed={theme === "dark"}>
+        <PiMoon aria-hidden />
       </button>
     </div>
   );
 }
 
+/** Estado de un vehículo o de una pieza: color, ícono y palabra, nunca solo el color. */
 export function StatusBadge({ status }: { status: Status }) {
-  const m = statusMeta[status];
+  const { label, color, soft, Icono } = statusMeta[status];
   return (
     <span
       style={{
-        padding: "4px 9px",
-        borderRadius: 99,
-        background: m.soft,
-        color: m.color,
-        fontSize: 11,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        padding: "3px 8px",
+        borderRadius: 4,
+        background: soft,
+        color,
+        fontSize: 13,
         fontWeight: 600,
         width: "fit-content",
+        whiteSpace: "nowrap",
       }}
     >
-      {m.label}
+      <Icono aria-hidden />
+      {label}
     </span>
   );
 }
 
-export function ProgressBar({ value, status, height = 6 }: { value: number; status: Status; height?: number }) {
-  const color = statusMeta[status].color;
+export function ProgressBar({ value, status, height = 4 }: { value: number; status: Status; height?: number }) {
   return (
-    <div style={{ height, borderRadius: 99, background: "var(--cf-surface-2)" }}>
+    <div style={{ height, borderRadius: 2, background: "var(--cf-surface-2)" }}>
       <div
         style={{
           width: `${Math.min(100, Math.max(0, value * 100))}%`,
           height: "100%",
-          borderRadius: 99,
-          background: color,
-          transition: "width .3s ease",
+          borderRadius: 2,
+          background: statusMeta[status].color,
         }}
       />
     </div>
   );
 }
 
+/**
+ * Quién firmó un registro del historial, como un timbre: azul el taller, violeta la
+ * persona. El historial es un audit trail y esto es su firma.
+ */
 export function AuthorPill({ role, name }: { role: "persona" | "taller"; name: string }) {
   const color = role === "persona" ? "var(--cf-persona)" : "var(--cf-accent)";
-  const soft = role === "persona" ? "var(--cf-persona-soft)" : "var(--cf-accent-soft)";
   return (
     <span
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 6,
-        padding: "3px 8px",
-        borderRadius: 99,
-        background: soft,
-        fontSize: 10.5,
+        gap: 5,
+        padding: "2px 7px",
+        borderRadius: 4,
+        border: `1px solid ${color}`,
+        fontSize: 12.5,
+        fontWeight: 500,
         color,
       }}
     >
-      <span style={{ width: 6, height: 6, borderRadius: 99, background: color }} />
+      <PiStamp aria-hidden />
       {name}
     </span>
-  );
-}
-
-export function Card({ children, style }: { children: ReactNode; style?: CSSProperties }) {
-  return (
-    <div
-      style={{
-        border: "1px solid var(--cf-border)",
-        borderRadius: 16,
-        background: "var(--cf-surface)",
-        ...style,
-      }}
-    >
-      {children}
-    </div>
   );
 }

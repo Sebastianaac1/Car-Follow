@@ -1,15 +1,12 @@
+import { PiSignOut } from "react-icons/pi";
 import { ThemeToggle } from "@cf/ui";
 import type { Client, Vehicle } from "@cf/types";
 import { useApi } from "../api";
 import { Cargando, ErrorApi } from "../Estado";
 import { useSesion } from "../sesion";
 
-const card: React.CSSProperties = {
-  border: "1px solid var(--cf-border)",
-  borderRadius: 14,
-  background: "var(--cf-surface)",
-  padding: 18,
-};
+const seccion: React.CSSProperties = { padding: "18px 20px" };
+const subtitulo: React.CSSProperties = { fontSize: 22, margin: "0 0 12px" };
 
 export function Ajustes() {
   const { sesion, salir } = useSesion();
@@ -21,70 +18,54 @@ export function Ajustes() {
   if (cartera.error) return <ErrorApi mensaje={cartera.error} onReintentar={cartera.recargar} />;
 
   return (
-    <>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 24, marginBottom: 4 }}>
+    <div style={{ maxWidth: 720 }}>
+      <h1 className="cf-display" style={{ fontSize: 40, margin: "0 0 24px" }}>
         Ajustes
-      </div>
-      <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginBottom: 22 }}>
-        Configuración del taller y de la cuenta
-      </div>
+      </h1>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 14 }}>
-        <div style={card}>
-          <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>Apariencia</div>
-          <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginBottom: 12 }}>Modo claro u oscuro del panel</div>
-          <ThemeToggle />
-        </div>
+      <div className="cf-panel cf-lista">
+        <section style={seccion}>
+          <h2 className="cf-display" style={subtitulo}>
+            Taller
+          </h2>
+          <dl className="cf-num" style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "8px 16px", margin: 0 }}>
+            <dt style={{ color: "var(--cf-dim)" }}>Nombre</dt>
+            <dd style={{ margin: 0, textAlign: "right" }}>{sesion?.nombre ?? "Sin nombre"}</dd>
+            <dt style={{ color: "var(--cf-dim)" }}>Clientes</dt>
+            <dd style={{ margin: 0, textAlign: "right" }}>{(cartera.datos ?? []).length}</dd>
+            <dt style={{ color: "var(--cf-dim)" }}>Vehículos en seguimiento</dt>
+            <dd style={{ margin: 0, textAlign: "right" }}>{(flota.datos ?? []).length}</dd>
+          </dl>
+        </section>
 
         {/* Acá había una tarjeta de "Plan · Facturación mensual · Activo" con datos del
             taller de ejemplo. Se fue: no hay facturación en ninguna parte del sistema y
             mostrarla era inventar una funcionalidad que no existe. */}
-        <div style={card}>
-          <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>Taller</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 12.5 }}>
-            <Fila label="Nombre" value={sesion?.nombre ?? "—"} />
-            <Fila label="Clientes" value={String((cartera.datos ?? []).length)} />
-            <Fila label="Vehículos en seguimiento" value={String((flota.datos ?? []).length)} />
+        <section style={seccion}>
+          <h2 className="cf-display" style={subtitulo}>
+            Apariencia
+          </h2>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+            <span style={{ color: "var(--cf-dim)" }}>Tema claro u oscuro del panel</span>
+            <ThemeToggle />
           </div>
-        </div>
+        </section>
 
-        <div style={card}>
-          <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>Cuenta</div>
-          <div className="cf-mono" style={{ fontSize: 12, color: "var(--cf-dim)", marginBottom: 14, wordBreak: "break-all" }}>
-            {sesion?.email}
-          </div>
-          <p style={{ fontSize: 11.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: "0 0 14px" }}>
+        <section style={seccion}>
+          <h2 className="cf-display" style={subtitulo}>
+            Cuenta
+          </h2>
+          <div style={{ wordBreak: "break-all", marginBottom: 6 }}>{sesion?.email}</div>
+          <p style={{ fontSize: 14, color: "var(--cf-dim)", margin: "0 0 16px" }}>
             Esta es la cuenta del dueño del taller. Por ahora no se pueden sumar empleados con acceso propio: cada
             cuenta de taller nueva crea un taller aparte, con su propia cartera.
           </p>
-          <button
-            onClick={salir}
-            className="cf-tap"
-            style={{
-              padding: "9px 16px",
-              borderRadius: 10,
-              fontSize: 13,
-              fontFamily: "inherit",
-              fontWeight: 500,
-              border: "1px solid var(--cf-border)",
-              background: "var(--cf-bg)",
-              color: "var(--cf-danger)",
-              cursor: "pointer",
-            }}
-          >
+          <button className="cf-btn-quieto" onClick={salir} style={{ color: "var(--cf-danger)" }}>
+            <PiSignOut aria-hidden />
             Cerrar sesión
           </button>
-        </div>
+        </section>
       </div>
-    </>
-  );
-}
-
-function Fila({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
-      <span style={{ color: "var(--cf-dim)" }}>{label}</span>
-      <span style={{ textAlign: "right" }}>{value}</span>
     </div>
   );
 }

@@ -1,81 +1,72 @@
 import { useNavigate } from "react-router-dom";
+import { PiCaretRight, PiListChecks, PiSignOut } from "react-icons/pi";
 import { useSesion } from "../sesion";
 
-const row: React.CSSProperties = {
-  border: "1px solid var(--cf-border)",
-  borderRadius: 14,
-  background: "var(--cf-surface)",
-  padding: "14px 16px",
+const fila: React.CSSProperties = {
   display: "flex",
-  justifyContent: "space-between",
   alignItems: "center",
-  cursor: "pointer",
+  gap: 14,
+  width: "100%",
+  padding: "16px 18px",
+  border: "none",
+  background: "none",
+  font: "inherit",
+  color: "inherit",
+  textAlign: "left",
 };
 
 export function Perfil() {
   const navigate = useNavigate();
   const { sesion, salir } = useSesion();
   return (
-    <div style={{ padding: "14px 20px" }}>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 22, marginBottom: 4 }}>
+    <div style={{ maxWidth: 640 }}>
+      <h1 className="cf-display" style={{ fontSize: 40, margin: "0 0 20px" }}>
         Perfil
-      </div>
-      <div style={{ fontSize: 12, color: "var(--cf-dim)", marginBottom: 18 }}>{sesion?.nombre} · plan gratuito</div>
+      </h1>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
         <div
+          aria-hidden
+          className="cf-display"
           style={{
-            width: 54,
-            height: 54,
-            borderRadius: 16,
-            background: "var(--cf-persona-soft)",
-            border: "1px solid var(--cf-persona)",
+            width: 56,
+            height: 56,
+            borderRadius: "50%",
+            border: "2px solid var(--cf-persona)",
+            color: "var(--cf-persona)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "var(--cf-persona)",
-            fontWeight: 600,
-            fontSize: 20,
+            fontSize: 26,
+            fontWeight: 700,
+            flexShrink: 0,
           }}
         >
           {sesion?.nombre.charAt(0).toUpperCase() ?? "?"}
         </div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: 15 }}>{sesion?.nombre}</div>
-          <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)", wordBreak: "break-all" }}>
-            {sesion?.email}
-          </div>
+          <div style={{ fontWeight: 600, fontSize: 18 }}>{sesion?.nombre}</div>
+          <div style={{ fontSize: 14.5, color: "var(--cf-dim)", wordBreak: "break-all" }}>{sesion?.email}</div>
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <div style={row} onClick={() => navigate("/perfil/reglas")}>
-          <div>
-            <div style={{ fontWeight: 500, fontSize: 14 }}>Reglas por pieza</div>
-            <div style={{ fontSize: 11.5, color: "var(--cf-dim)", marginTop: 3 }}>
-              Intervalos de recordatorio por km o tiempo
-            </div>
-          </div>
-          <span style={{ color: "var(--cf-accent)", fontSize: 18 }}>›</span>
-        </div>
+      <div className="cf-panel cf-lista">
+        <button className="cf-tap" style={fila} onClick={() => navigate("/perfil/reglas")}>
+          <PiListChecks aria-hidden size={22} color="var(--cf-accent)" />
+          <span style={{ flex: 1 }}>
+            <span style={{ display: "block", fontWeight: 600 }}>Reglas por pieza</span>
+            <span style={{ display: "block", fontSize: 14, color: "var(--cf-dim)" }}>
+              Cada cuántos km o meses te avisamos
+            </span>
+          </span>
+          <PiCaretRight aria-hidden color="var(--cf-dim)" />
+        </button>
         {/* "Talleres vinculados" y "Notificaciones" se fueron: mostraban un taller fijo y
             un ajuste que no existe. Hoy la persona no tiene forma de saber qué talleres
             ven sus vehículos (historia 7.2) ni hay avisos que configurar (historia 5.4).
             Vuelven cuando haya algo real detrás. */}
-
-        <button
-          onClick={salir}
-          className="cf-tap"
-          style={{
-            ...row,
-            width: "100%",
-            fontFamily: "inherit",
-            fontSize: 14,
-            fontWeight: 500,
-            color: "var(--cf-danger)",
-            marginTop: 4,
-          }}
-        >
+        <button className="cf-tap" style={{ ...fila, color: "var(--cf-danger)", fontWeight: 600 }} onClick={salir}>
+          <PiSignOut aria-hidden size={22} />
           Cerrar sesión
         </button>
       </div>

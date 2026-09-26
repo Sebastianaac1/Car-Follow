@@ -9,17 +9,15 @@ import { useSesion } from "../sesion";
 const URL_PERSONA = import.meta.env.VITE_URL_PERSONA ?? "http://localhost:5173";
 
 /* Duplicado a propósito con Registro.tsx: son dos pantallas parecidas, no la
-   misma. Regla de tres — se extrae al tercer uso, no antes. */
-const etiqueta: React.CSSProperties = { fontSize: 11.5, color: "var(--cf-dim)", marginBottom: 6, fontWeight: 500 };
-const campo: React.CSSProperties = { width: "100%", borderRadius: 10, padding: "11px 13px", fontSize: 13.5 };
+   misma. Regla de tres: se extrae al tercer uso, no antes. */
 const marco: React.CSSProperties = {
   minHeight: "100vh",
-  background: "radial-gradient(760px 420px at 50% -10%, var(--cf-accent-soft), transparent 70%), var(--cf-bg)",
-  color: "var(--cf-text)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  padding: 24,
+  padding: "72px 20px 40px",
+  background: "var(--cf-bg)",
+  color: "var(--cf-text)",
 };
 
 export function Login() {
@@ -61,35 +59,26 @@ export function Login() {
 
   return (
     <div style={marco}>
-      <div style={{ position: "absolute", top: 24, right: 24 }}>
+      <div style={{ position: "absolute", top: 20, right: 20 }}>
         <ThemeToggle />
       </div>
 
-      <form
-        onSubmit={enviar}
-        style={{
-          width: "100%",
-          maxWidth: 380,
-          border: "1px solid var(--cf-border)",
-          borderRadius: 18,
-          background: "var(--cf-surface)",
-          padding: 28,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 22 }}>
-          <Logo size={40} radius={12} font={16} />
+      <form onSubmit={enviar} className="cf-panel" style={{ width: "100%", maxWidth: 400, padding: 32 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 28 }}>
+          <Logo size={40} />
           <div>
-            <div className="cf-display" style={{ fontWeight: 700, fontSize: 18, lineHeight: 1 }}>
+            <div className="cf-display" style={{ fontSize: 28, fontWeight: 700 }}>
               Car Follow
             </div>
-            <div className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-accent)", marginTop: 4 }}>
-              Panel del taller
-            </div>
+            <div style={{ fontSize: 14.5, color: "var(--cf-dim)" }}>Panel del taller</div>
           </div>
         </div>
 
-        <div style={etiqueta}>Correo</div>
+        <label className="cf-etiqueta" htmlFor="login-correo">
+          Correo
+        </label>
         <input
+          id="login-correo"
           className="cf-input"
           type="email"
           value={email}
@@ -99,40 +88,38 @@ export function Login() {
           }}
           autoComplete="username"
           required
-          style={{ ...campo, marginBottom: 14 }}
+          style={{ marginBottom: 16 }}
         />
 
-        <div style={etiqueta}>Contraseña</div>
+        <label className="cf-etiqueta" htmlFor="login-clave">
+          Contraseña
+        </label>
         <input
+          id="login-clave"
           className="cf-input"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
           required
-          style={{ ...campo, marginBottom: error ? 12 : 18 }}
+          style={{ marginBottom: error ? 12 : 20 }}
         />
 
         {error && (
-          <div role="alert" style={{ fontSize: 12.5, color: "var(--cf-danger)", marginBottom: 14 }}>
+          <div role="alert" style={{ fontSize: 14.5, color: "var(--cf-danger)", marginBottom: 14 }}>
             {error}
           </div>
         )}
 
-        <button
-          className="cf-btn"
-          type="submit"
-          disabled={enviando}
-          style={{ width: "100%", height: 44, borderRadius: 12, fontSize: 14, opacity: enviando ? 0.6 : 1 }}
-        >
+        <button className="cf-btn" type="submit" disabled={enviando} style={{ width: "100%", height: 46 }}>
           {enviando ? "Entrando…" : "Entrar"}
         </button>
 
-        <div style={{ fontSize: 12.5, color: "var(--cf-dim)", marginTop: 16 }}>
+        <div style={{ fontSize: 14.5, color: "var(--cf-dim)", marginTop: 18 }}>
           ¿No tienes cuenta? <Link to="/registro">Crear una</Link>
         </div>
 
-        <p style={{ fontSize: 11.5, lineHeight: 1.55, color: "var(--cf-dim)", margin: "14px 0 0" }}>
+        <p style={{ fontSize: 13.5, color: "var(--cf-dim)", margin: "14px 0 0" }}>
           Si tu cuenta es de persona, al entrar te llevamos a su app. Tu contraseña no se guarda en este navegador.
         </p>
       </form>

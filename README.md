@@ -10,7 +10,7 @@
 [![pnpm](https://img.shields.io/badge/pnpm-workspaces-F69220?logo=pnpm&logoColor=white)](https://pnpm.io)
 [![Turborepo](https://img.shields.io/badge/Turborepo-2-EF4444?logo=turborepo&logoColor=white)](https://turbo.build)
 
-![App de la persona](docs/persona.png)
+![App de la persona](docs/persona.jpg)
 
 </div>
 
@@ -98,26 +98,26 @@ mismo que hará el JWT cuando exista.
 
 ### Panel del taller
 
-Dashboard ordenado por urgencia, con búsqueda y ficha de auditoría que muestra quién
-tocó qué y cuándo. La columna **Próximo** y el estado de cada fila salen del cálculo,
-no de datos guardados.
+Resumen ordenado por urgencia, con búsqueda y ficha lateral que muestra quién tocó qué
+y cuándo. La columna **Lo que viene** y el estado de cada fila salen del cálculo, no de
+datos guardados.
 
-![Panel del taller](docs/taller.png)
+![Panel del taller](docs/taller.jpg)
 
 Los recordatorios se seleccionan y abren un panel con las acciones sobre el cliente —
 llamar, mandar el aviso por WhatsApp con el mensaje ya redactado, o saltar directo a
 registrar el trabajo con el vehículo preseleccionado:
 
-![Recordatorios con panel de acciones](docs/recordatorios.png)
+![Recordatorios con panel de acciones](docs/recordatorios.jpg)
 
 Cada vehículo tiene su ficha en `/vehiculos/:id`, con las próximas mantenciones, el
 historial completo y el audit trail de cada corrección:
 
-![Ficha del vehículo](docs/vehiculo.png)
+![Ficha del vehículo](docs/vehiculo.jpg)
 
 Tema claro incluido, con la misma paleta portada a valores accesibles:
 
-![Panel del taller en tema claro](docs/taller-claro.png)
+![Panel del taller en tema claro](docs/taller-claro.jpg)
 
 ### App de la persona
 
@@ -176,7 +176,7 @@ si lo usa una sola, se queda en esa app.
 | | Qué hace |
 |---|---|
 | `types/` | **El contrato.** `Vehicle`, `MaintenanceRecord`, `PartRule`, `Revision`, `Account`… Es el único lugar de los DTOs, y el backend devuelve exactamente estas formas. Cambiar un tipo acá rompe la compilación de las dos apps a la vez, que es justo lo que se quiere. |
-| `ui/` | El design system. `theme.ts` tiene la paleta en tokens CSS, `ThemeProvider.tsx` persiste claro/oscuro, `components.tsx` trae `Logo`, `StatusBadge`, `ProgressBar`, `AuthorPill` y `Card`, y `styles.css` los estilos base. Solo entra lo que usan **ambas** apps. |
+| `ui/` | El design system. `theme.ts` tiene la paleta en tokens CSS (papel, asfalto, tinta de timbre), `ThemeProvider.tsx` persiste claro/oscuro, `components.tsx` trae `Logo`, `Patente`, `StatusBadge`, `ProgressBar`, `AuthorPill`, `ThemeToggle` y los tipos de vehículo con su ícono, y `styles.css` las tipografías (Barlow y Barlow Condensed) y los estilos base. Los íconos son de `react-icons` (set Phosphor). Solo entra lo que usan **ambas** apps. |
 | `mock-data/` | **Ya no lo importa ninguna app.** Fue donde vivió la derivación de recordatorios hasta que se mudó al backend; queda como la implementación de referencia contra la que se verificó esa mudanza, campo por campo. Borrarlo es una decisión pendiente, no un trámite. |
 
 ### `apps/persona/src/` — la app de la persona
@@ -202,7 +202,7 @@ Misma estructura, otra forma. Los archivos que se repiten de nombre **no son el 
 | `Layout.tsx` | La barra lateral: navegación, nombre del taller (que viene de la sesión), toggle de tema y cerrar sesión. |
 | `sesion.tsx` · `api.ts` · `Estado.tsx` | Los mismos tres archivos que en persona, **duplicados a propósito**: son dos claves de sesión y dos ciclos de vida distintos, y compartirlos obligaría a un paquete común con un solo archivo adentro. |
 | `format.ts` | Da `04/03/2025`. La otra mitad de la duplicación deliberada. Suma `formatTimestamp()` para las marcas de tiempo del audit trail. |
-| `pages/` | `Dashboard` (KPIs), `Vehiculos` + `VehiculoDetalle`, `Clientes`, `Trabajos`, `Recordatorios`, `Ajustes`, `Login` y `Registro`. |
+| `pages/` | `Dashboard` (el Resumen), `Vehiculos` + `VehiculoDetalle`, `Clientes`, `Trabajos`, `Recordatorios`, `Ajustes`, `Login` y `Registro`. |
 | `components/AuditPanel.tsx` | El panel de auditoría de un vehículo. Solo lo usa el taller, así que se queda acá y no sube a `@cf/ui`. |
 
 ### Configuración en la raíz

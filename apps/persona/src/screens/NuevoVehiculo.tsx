@@ -1,17 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { PiX } from "react-icons/pi";
+import { ordenDeTipos, tiposDeVehiculo } from "@cf/ui";
 import type { Vehicle } from "@cf/types";
 import { api } from "../api";
-
-const etiqueta: React.CSSProperties = { fontSize: 11, color: "var(--cf-dim)", marginBottom: 5, fontWeight: 500 };
-const campo: React.CSSProperties = { width: "100%", borderRadius: 11, padding: "11px 13px", fontSize: 13.5 };
-
-const tipos: { valor: Vehicle["kind"]; label: string }[] = [
-  { valor: "auto", label: "Auto" },
-  { valor: "moto", label: "Moto" },
-  { valor: "camion", label: "Camión" },
-  { valor: "maquinaria", label: "Maquinaria" },
-];
 
 /**
  * Faltaba: el garaje vacío decía "agrega tu primer vehículo" y el botón llevaba a
@@ -53,86 +45,100 @@ export function NuevoVehiculo() {
   };
 
   return (
-    <form onSubmit={guardar} style={{ padding: "14px 20px", maxWidth: 460 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-        <span onClick={() => navigate("/")} style={{ fontSize: 18, cursor: "pointer" }} role="button" aria-label="Cerrar">
-          ✕
-        </span>
-        <span className="cf-display" style={{ fontWeight: 600, fontSize: 18 }}>
+    <form onSubmit={guardar} style={{ maxWidth: 520 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 24 }}>
+        <h1 className="cf-display" style={{ fontSize: 36, margin: 0 }}>
           Agregar vehículo
-        </span>
+        </h1>
+        <button type="button" className="cf-btn-quieto" onClick={() => navigate("/")} aria-label="Cerrar" style={{ width: 40, padding: 0 }}>
+          <PiX aria-hidden />
+        </button>
       </div>
 
-      <div style={etiqueta}>Vehículo</div>
+      <span className="cf-etiqueta">Tipo</span>
+      <div role="group" aria-label="Tipo de vehículo" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 18 }}>
+        {ordenDeTipos.map((t) => {
+          const { label, Icono } = tiposDeVehiculo[t];
+          const activo = kind === t;
+          return (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setKind(t)}
+              aria-pressed={activo}
+              className={activo ? undefined : "cf-tap"}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 4,
+                padding: "12px 4px",
+                borderRadius: 8,
+                font: "inherit",
+                fontSize: 14,
+                fontWeight: activo ? 600 : 500,
+                border: `1px solid ${activo ? "var(--cf-accent)" : "var(--cf-border)"}`,
+                background: activo ? "var(--cf-accent-soft)" : "var(--cf-surface)",
+                color: activo ? "var(--cf-accent)" : "var(--cf-text)",
+              }}
+            >
+              <Icono aria-hidden size={26} />
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      <label className="cf-etiqueta" htmlFor="nv-nombre">Vehículo</label>
       <input
+        id="nv-nombre"
         className="cf-input"
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Toyota Hilux"
         required
-        style={{ ...campo, marginBottom: 13 }}
+        style={{ marginBottom: 18 }}
       />
 
-      <div style={{ display: "flex", gap: 12, marginBottom: 13 }}>
+      <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={etiqueta}>Patente</div>
+          <label className="cf-etiqueta" htmlFor="nv-patente">Patente</label>
+          {/* El campo se escribe como se ve la placa: condensado y en mayúsculas. */}
           <input
-            className="cf-input cf-mono"
+            id="nv-patente"
+            className="cf-input cf-display"
             value={plate}
-            onChange={(e) => setPlate(e.target.value)}
-            placeholder="ABCD12"
+            onChange={(e) => setPlate(e.target.value.toUpperCase())}
+            placeholder="BBCL12"
             required
             minLength={4}
-            style={campo}
+            style={{ fontSize: 20, fontWeight: 700, letterSpacing: "0.08em" }}
           />
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={etiqueta}>Kilometraje</div>
+          <label className="cf-etiqueta" htmlFor="nv-km">Kilometraje</label>
           <input
-            className="cf-input cf-mono"
+            id="nv-km"
+            className="cf-input cf-num"
+            inputMode="numeric"
             value={odometer}
             onChange={(e) => setOdometer(e.target.value)}
             placeholder="84320"
-            style={campo}
           />
         </div>
       </div>
 
-      <div style={etiqueta}>Tipo</div>
-      <select
-        className="cf-input"
-        value={kind}
-        // El valor de un <select> es string: en vez de afirmar que es un kind, se busca
-        // en la lista de la que salieron las opciones. Sin `as` y sin confiar en el DOM.
-        onChange={(e) => {
-          const elegido = tipos.find((t) => t.valor === e.target.value);
-          if (elegido) setKind(elegido.valor);
-        }}
-        style={{ ...campo, marginBottom: error ? 12 : 18 }}
-      >
-        {tipos.map((t) => (
-          <option key={t.valor} value={t.valor}>
-            {t.label}
-          </option>
-        ))}
-      </select>
-
       {error && (
-        <div role="alert" style={{ fontSize: 12.5, color: "var(--cf-danger)", marginBottom: 14, lineHeight: 1.45 }}>
+        <div role="alert" style={{ fontSize: 14.5, color: "var(--cf-danger)", marginBottom: 14 }}>
           {error}
         </div>
       )}
 
-      <button
-        className="cf-btn"
-        type="submit"
-        disabled={guardando}
-        style={{ width: "100%", height: 46, borderRadius: 13, fontSize: 14.5, opacity: guardando ? 0.6 : 1 }}
-      >
+      <button className="cf-btn" type="submit" disabled={guardando} style={{ width: "100%", height: 46 }}>
         {guardando ? "Guardando…" : "Agregar vehículo"}
       </button>
 
-      <p style={{ fontSize: 11.5, lineHeight: 1.5, color: "var(--cf-dim)", margin: "14px 0 0" }}>
+      <p style={{ fontSize: 14, color: "var(--cf-dim)", margin: "16px 0 0" }}>
         El vehículo parte con las reglas de recordatorio de su tipo: auto, moto, camión o maquinaria. Los avisos
         empiezan a contar desde el primer trabajo que registres.
       </p>

@@ -1,19 +1,14 @@
-import { AuthorPill, ProgressBar, StatusBadge } from "@cf/ui";
+import { PiArrowLeft } from "react-icons/pi";
+import { AuthorPill, Patente, ProgressBar, StatusBadge, tiposDeVehiculo } from "@cf/ui";
 import type { MaintenanceRecord, UpcomingService, Vehicle } from "@cf/types";
 import { useApi } from "../api";
 import { Cargando, ErrorApi } from "../Estado";
 import { formatDate, km } from "../format";
 
-/* La cabecera va sin silueta del tipo de vehículo, a diferencia de las tarjetas
-   del garaje: acá el nombre del vehículo ya domina y no hay nada que aclarar. */
-const cabecera = "linear-gradient(135deg, var(--cf-surface-2), var(--cf-surface))";
-
-const sectionLabel: React.CSSProperties = {
-  fontSize: 11,
-  letterSpacing: 1.5,
-  textTransform: "uppercase",
-  color: "var(--cf-dim)",
-  marginBottom: 10,
+const colorEstado: Record<UpcomingService["status"], string> = {
+  ok: "var(--cf-ok)",
+  pronto: "var(--cf-warn)",
+  vencido: "var(--cf-danger)",
 };
 
 export function DetailBody({ vehicleId, onBack }: { vehicleId: string; onBack?: () => void }) {
@@ -30,143 +25,114 @@ export function DetailBody({ vehicleId, onBack }: { vehicleId: string; onBack?: 
   if (historial.error) return <ErrorApi mensaje={historial.error} onReintentar={historial.recargar} />;
 
   const vehicle = ficha.datos;
-  if (!vehicle) return <div style={{ padding: 20 }}>Vehículo no encontrado.</div>;
+  if (!vehicle) return <p>Vehículo no encontrado.</p>;
 
   const upcoming = proximos.datos ?? [];
   const records = historial.datos ?? [];
   // La lista viene ordenada por urgencia: el estado del vehículo es el del primero.
   const status = upcoming[0]?.status ?? "ok";
+  const { label, Icono } = tiposDeVehiculo[vehicle.kind];
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-      <div
-        style={{
-          height: 120,
-          background: cabecera,
-          position: "relative",
-          display: "flex",
-          alignItems: "flex-end",
-          padding: "14px 20px",
-        }}
-      >
-        {onBack && (
-          <button
-            onClick={onBack}
-            aria-label="Volver"
-            className="cf-tap"
-            style={{
-              position: "absolute",
-              top: 12,
-              left: 14,
-              width: 30,
-              height: 30,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              border: "1px solid var(--cf-border)",
-              borderRadius: 9,
-              background: "var(--cf-surface)",
-              color: "var(--cf-text)",
-              fontSize: 17,
-              lineHeight: 1,
-            }}
-          >
-            ‹
-          </button>
-        )}
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", width: "100%", gap: 10 }}>
-          <div>
-            <div className="cf-display" style={{ fontWeight: 600, fontSize: 20 }}>
-              {vehicle.name}
-            </div>
-            <div className="cf-mono" style={{ fontSize: 12, color: "var(--cf-dim)" }}>
-              {vehicle.plate} · {km(vehicle.odometer)} km
-            </div>
-          </div>
-          <StatusBadge status={status} />
-        </div>
+    <div>
+      {onBack && (
+        <button className="cf-btn-quieto" onClick={onBack} style={{ height: 34, padding: "0 12px", marginBottom: 20 }}>
+          <PiArrowLeft aria-hidden />
+          Volver
+        </button>
+      )}
+
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <Patente valor={vehicle.plate} alto={34} />
+        <StatusBadge status={status} />
+      </div>
+      <h1 className="cf-display" style={{ fontSize: 40, margin: "12px 0 4px" }}>
+        {vehicle.name}
+      </h1>
+      <div className="cf-num" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 15, color: "var(--cf-dim)" }}>
+        <Icono aria-hidden size={18} />
+        {label}, {km(vehicle.odometer)} km
       </div>
 
-      <div style={{ padding: "16px 20px" }}>
-        <div style={sectionLabel}>Próximos mantenimientos</div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-          {upcoming.map((u) => (
-            <div
-              key={u.id}
-              style={{
-                border: "1px solid var(--cf-border)",
-                borderRadius: 14,
-                background: "var(--cf-surface)",
-                padding: "11px 13px",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontWeight: 500, fontSize: 13.5 }}>{u.part}</span>
-                <span
-                  className="cf-mono"
-                  style={{
-                    fontSize: 11,
-                    color: u.status === "ok" ? "var(--cf-ok)" : u.status === "pronto" ? "var(--cf-warn)" : "var(--cf-danger)",
-                  }}
-                >
-                  {u.remainingLabel}
-                </span>
-              </div>
-              <ProgressBar value={Math.min(1, u.progress)} status={u.status} height={5} />
-              <div className="cf-mono" style={{ fontSize: 10, color: "var(--cf-dim)", marginTop: 6 }}>
-                {u.ruleLabel}
-              </div>
-              <div className="cf-mono" style={{ fontSize: 10, color: "var(--cf-dim)", marginTop: 3 }}>
-                desde {formatDate(u.since.date)} · {km(u.since.odometer)} km
-              </div>
-            </div>
-          ))}
-          {upcoming.length === 0 && (
-            <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gap: 32,
+          alignItems: "start",
+          marginTop: 32,
+        }}
+      >
+        <section>
+          <h2 className="cf-display" style={{ fontSize: 24, margin: "0 0 12px" }}>
+            Próximas mantenciones
+          </h2>
+          {upcoming.length === 0 ? (
+            <p style={{ margin: 0, color: "var(--cf-dim)" }}>
               Registra la primera mantención para empezar a contar el intervalo.
+            </p>
+          ) : (
+            <div className="cf-panel cf-lista">
+              {upcoming.map((u) => (
+                <div key={u.id} style={{ padding: "14px 16px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
+                    <span style={{ fontWeight: 600 }}>{u.part}</span>
+                    <span className="cf-num" style={{ fontSize: 14, fontWeight: 600, color: colorEstado[u.status], whiteSpace: "nowrap" }}>
+                      {u.remainingLabel}
+                    </span>
+                  </div>
+                  <ProgressBar value={Math.min(1, u.progress)} status={u.status} />
+                  <div className="cf-num" style={{ fontSize: 13.5, color: "var(--cf-dim)", marginTop: 8 }}>
+                    Regla: {u.ruleLabel}. Desde el {formatDate(u.since.date)}, a los {km(u.since.odometer)} km.
+                  </div>
+                </div>
+              ))}
             </div>
           )}
-        </div>
+        </section>
 
-        <div style={sectionLabel}>Historial</div>
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {records.map((r, i) => (
-            <div
-              key={r.id}
-              style={{
-                display: "flex",
-                gap: 11,
-                paddingBottom: i === records.length - 1 ? 0 : 14,
-                borderLeft: "2px solid var(--cf-border)",
-                marginLeft: 5,
-                paddingLeft: 16,
-                position: "relative",
-              }}
-            >
-              <span
-                style={{
-                  position: "absolute",
-                  left: -6,
-                  top: 2,
-                  width: 10,
-                  height: 10,
-                  borderRadius: 99,
-                  background: r.author.role === "taller" ? "var(--cf-accent)" : "var(--cf-persona)",
-                  border: "2px solid var(--cf-bg)",
-                }}
-              />
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{r.title}</div>
-                <div className="cf-mono" style={{ fontSize: 10.5, color: "var(--cf-dim)", marginTop: 3 }}>
-                  {formatDate(r.date)} · {km(r.odometer)} km
-                </div>
-                <div style={{ marginTop: 7 }}>
+        <section>
+          <h2 className="cf-display" style={{ fontSize: 24, margin: "0 0 12px" }}>
+            Historial
+          </h2>
+          {records.length === 0 ? (
+            <p style={{ margin: 0, color: "var(--cf-dim)" }}>Todavía no hay mantenciones registradas.</p>
+          ) : (
+            <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
+              {records.map((r, i) => (
+                <li
+                  key={r.id}
+                  style={{
+                    position: "relative",
+                    paddingLeft: 22,
+                    paddingBottom: i === records.length - 1 ? 0 : 20,
+                    borderLeft: `2px solid ${i === records.length - 1 ? "transparent" : "var(--cf-border)"}`,
+                    marginLeft: 5,
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    style={{
+                      position: "absolute",
+                      left: -7,
+                      top: 4,
+                      width: 12,
+                      height: 12,
+                      borderRadius: "50%",
+                      background: "var(--cf-bg)",
+                      border: `3px solid ${r.author.role === "taller" ? "var(--cf-accent)" : "var(--cf-persona)"}`,
+                    }}
+                  />
+                  <div style={{ fontWeight: 600 }}>{r.title}</div>
+                  <div className="cf-num" style={{ fontSize: 14, color: "var(--cf-dim)", margin: "2px 0 8px" }}>
+                    {formatDate(r.date)}, {km(r.odometer)} km
+                  </div>
                   <AuthorPill role={r.author.role} name={r.author.name} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
       </div>
     </div>
   );

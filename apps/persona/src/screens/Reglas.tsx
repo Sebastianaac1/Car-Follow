@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { PiArrowLeft } from "react-icons/pi";
 import type { PartRule, Vehicle } from "@cf/types";
 import { useApi } from "../api";
 import { Cargando, ErrorApi } from "../Estado";
@@ -17,48 +18,46 @@ export function Reglas() {
   const actual = selected ?? mine[0]?.id ?? null;
 
   return (
-    <div style={{ padding: "14px 20px" }}>
-      <div style={{ marginBottom: 6 }}>
-        <span onClick={() => navigate("/perfil")} style={{ fontSize: 18, cursor: "pointer" }}>
-          ‹
-        </span>
-      </div>
-      <div className="cf-display" style={{ fontWeight: 600, fontSize: 20, marginBottom: 4 }}>
+    <div style={{ maxWidth: 640 }}>
+      <button className="cf-btn-quieto" onClick={() => navigate("/perfil")} style={{ height: 34, padding: "0 12px", marginBottom: 20 }}>
+        <PiArrowLeft aria-hidden />
+        Perfil
+      </button>
+      <h1 className="cf-display" style={{ fontSize: 40, margin: "0 0 6px" }}>
         Reglas por pieza
-      </div>
-      <div style={{ fontSize: 12, color: "var(--cf-dim)", marginBottom: 16, lineHeight: 1.5 }}>
+      </h1>
+      <p style={{ margin: "0 0 24px", color: "var(--cf-dim)" }}>
         Cada vehículo tiene sus propios intervalos, porque una moto no se mantiene igual que un camión. El aviso salta
         por km o por tiempo, lo que ocurra primero.
-      </div>
+      </p>
 
       {mine.length === 0 ? (
-        <div style={{ fontSize: 12.5, color: "var(--cf-dim)", lineHeight: 1.5 }}>
-          Todavía no tienes vehículos. Las reglas se crean solas al registrar el primero.
-        </div>
+        <p style={{ color: "var(--cf-dim)" }}>Todavía no tienes vehículos. Las reglas se crean solas al registrar el primero.</p>
       ) : (
         <>
-          <div style={{ display: "flex", gap: 7, flexWrap: "wrap", marginBottom: 16 }}>
-            {mine.map((v) => {
-              const on = v.id === actual;
-              return (
-                <span
-                  key={v.id}
-                  onClick={() => setSelected(v.id)}
-                  style={{
-                    padding: "7px 12px",
-                    borderRadius: 10,
-                    fontSize: 12.5,
-                    cursor: "pointer",
-                    border: `1px solid ${on ? "var(--cf-accent)" : "var(--cf-border)"}`,
-                    background: on ? "var(--cf-accent-soft)" : "var(--cf-surface)",
-                    color: on ? "var(--cf-accent)" : "var(--cf-dim)",
-                    fontWeight: on ? 600 : 400,
-                  }}
-                >
-                  {v.name}
-                </span>
-              );
-            })}
+          {/* Duplicado a propósito con Historial.tsx: dos pantallas que eligen vehículo, no tres. */}
+          <div role="group" aria-label="Vehículo" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 }}>
+            {mine.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setSelected(v.id)}
+                aria-pressed={v.id === actual}
+                className={v.id === actual ? undefined : "cf-tap"}
+                style={{
+                  height: 36,
+                  padding: "0 14px",
+                  borderRadius: 8,
+                  font: "inherit",
+                  fontSize: 14.5,
+                  fontWeight: v.id === actual ? 600 : 500,
+                  border: `1px solid ${v.id === actual ? "var(--cf-text)" : "var(--cf-border)"}`,
+                  background: v.id === actual ? "var(--cf-text)" : "var(--cf-surface)",
+                  color: v.id === actual ? "var(--cf-bg)" : "var(--cf-text)",
+                }}
+              >
+                {v.name}
+              </button>
+            ))}
           </div>
           {actual && <ReglasDelVehiculo vehiculoId={actual} />}
         </>
@@ -78,26 +77,28 @@ function ReglasDelVehiculo({ vehiculoId }: { vehiculoId: string }) {
   if (reglas.error) return <ErrorApi mensaje={reglas.error} onReintentar={reglas.recargar} />;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      {(reglas.datos ?? []).map((r) => (
-        <div
-          key={r.id}
-          style={{
-            border: "1px solid var(--cf-border)",
-            borderRadius: 14,
-            background: "var(--cf-surface)",
-            padding: "12px 14px",
-          }}
-        >
-          <div style={{ fontWeight: 500, fontSize: 14 }}>{r.part}</div>
-          <div className="cf-mono" style={{ fontSize: 11, color: "var(--cf-dim)", marginTop: 4 }}>
-            {r.intervalKm ? `${km(r.intervalKm)} km` : "—"} · {r.intervalMonths ? `${r.intervalMonths} meses` : "—"}
+    <>
+      <div className="cf-panel cf-lista">
+        {(reglas.datos ?? []).map((r) => (
+          <div key={r.id} style={{ display: "flex", justifyContent: "space-between", gap: 16, padding: "14px 18px", flexWrap: "wrap" }}>
+            <span style={{ fontWeight: 600 }}>{r.part}</span>
+            <span className="cf-num" style={{ color: "var(--cf-dim)" }}>
+              {cadaCuanto(r)}
+            </span>
           </div>
-        </div>
-      ))}
-      <div style={{ fontSize: 11.5, color: "var(--cf-dim)", lineHeight: 1.5, marginTop: 2 }}>
-        Por ahora solo se pueden ver. Todavía no se pueden editar ni agregar reglas propias.
+        ))}
       </div>
-    </div>
+      <p style={{ fontSize: 14, color: "var(--cf-dim)", marginTop: 12 }}>
+        Por ahora solo se pueden ver. Todavía no se pueden editar ni agregar reglas propias.
+      </p>
+    </>
   );
 }
+
+/** "Cada 10.000 km o 6 meses", "Cada 10.000 km" o "Cada 6 meses". */
+function cadaCuanto(r: PartRule): string {
+  const partes = [r.intervalKm ? `${km(r.intervalKm)} km` : null, r.intervalMonths ? `${r.intervalMonths} meses` : null];
+  const hay = partes.filter(Boolean);
+  return hay.length === 0 ? "Sin intervalo" : `Cada ${hay.join(" o ")}`;
+}
+
