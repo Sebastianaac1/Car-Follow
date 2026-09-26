@@ -27,7 +27,9 @@ export async function api<T>(ruta: string, opciones?: Opciones): Promise<T> {
 
   // El token dura 7 días: volver el lunes y encontrarse el panel roto es un caso que va a
   // pasar, no una hipótesis. Se corta la sesión y se vuelve a entrar.
-  if (respuesta.status === 401) {
+  // Solo si la petición llevaba sesión: el login también responde 401 cuando la clave
+  // está mal, y ahí tiene que llegar su mensaje, no "tu sesión venció".
+  if (respuesta.status === 401 && sesion) {
     cerrarSesion();
     window.location.href = "/login";
     throw new Error("Tu sesión venció. Entra de nuevo.");
